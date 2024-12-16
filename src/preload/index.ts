@@ -69,3 +69,20 @@ const api: any = {
 contextBridge.exposeInMainWorld(apiKey, api);
 
 export type ElectronAPI = typeof api;
+
+// 定义 electronAPI 接口
+const electronAPI = {
+  // Frps 配置相关方法
+  readFrpsConfig: () => ipcRenderer.invoke('read-frps-config'),
+  saveFrpsConfig: (config: any) => ipcRenderer.invoke('save-frps-config', config),
+};
+
+// 将 API 暴露给渲染进程
+contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+
+// 为 TypeScript 添加类型声明
+declare global {
+  interface Window {
+    electronAPI: typeof electronAPI;
+  }
+}

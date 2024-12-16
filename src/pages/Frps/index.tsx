@@ -11,8 +11,6 @@ import {
 import { Card, message } from 'antd';
 import React, { useEffect, useState } from 'react';
 
-const { electronAPI } = window;
-
 const FrpsConfig: React.FC = () => {
   const [initialValues, setInitialValues] = useState<any>({});
 
@@ -20,10 +18,11 @@ const FrpsConfig: React.FC = () => {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const config = await electronAPI.readFrpsConfig();
+        const config = await window.electronAPI.readFrpsConfig();
         setInitialValues(config);
       } catch (error) {
-        message.error('加载配置失败');
+        console.error('加载配置失败:', error);
+        message.error('加载配置失败: ' + (error as Error).message);
       }
     };
     loadConfig();
@@ -32,7 +31,7 @@ const FrpsConfig: React.FC = () => {
   // 处理表单提交
   const handleSubmit = async (values: any) => {
     try {
-      await electronAPI.saveFrpsConfig(values);
+      await window.electronAPI.saveFrpsConfig(values);
       message.success('配置保存成功');
     } catch (error) {
       message.error('配置保存失败');
@@ -74,7 +73,7 @@ const FrpsConfig: React.FC = () => {
               name={['auth', 'method']}
               label="认证方式"
               options={[
-                { label: 'Token认证', value: 'token' },
+                { label: 'Token���证', value: 'token' },
                 { label: 'OIDC认证', value: 'oidc' },
               ]}
               colProps={{ span: 12 }}
