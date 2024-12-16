@@ -1,6 +1,8 @@
 import createProtocol from '@/create-protocol';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'node:path';
+import * as fs from 'fs';
+import {download, CancelError} from 'electron-dl';
 
 export type IContext = {
   /** is allowed quit app */
@@ -35,6 +37,7 @@ function createMainWindow() {
       nodeIntegration: false
     },
   });
+
   context.mainWindow = mainWindow;
   context.mainWindow.on('close', (event) => {
     if (process.platform !== 'darwin') {

@@ -9,7 +9,7 @@ export default defineConfig({
   electron: {},
   plugins: ['@liangskyli/umijs-plugin-electron'],
   layout: {
-    title: 'frp-ui',
+    title: 'frp-electron',
   },
   routes: [
     {
@@ -22,17 +22,17 @@ export default defineConfig({
       component: './Home',
     },
     {
-      name: '权限演示',
-      path: '/access',
-      component: './Access',
+      name: '服务端配置',
+      path: '/frps-config',
+      component: './Frps',
     },
     {
-      name: ' CRUD 示例',
-      path: '/table',
-      component: './Table',
+      name: '客户端配置',
+      path: '/frpc-config',
+      component: './Frpc',
     },
     {
-      name: ' 检查更新',
+      name: '检查更新',
       path: '/check-update',
       component: './CheckUpdate',
     },

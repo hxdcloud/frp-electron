@@ -1,10 +1,10 @@
 import { createMainWindow } from '@/main-window';
-import { app, ipcMain, protocol } from 'electron';
-import downloadFile from './download';
-
+import { app, protocol } from 'electron';
+import { updateFrp } from './update-frp';
+import { setupHomeHandlers } from './home';
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'app',
+    scheme: 'app',  
     privileges: {
       secure: true,
       standard: true,
@@ -15,9 +15,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(() => {
+  setupHomeHandlers();
   createMainWindow();
-
-  ipcMain.on('download-release', (event, url) => {
-    downloadFile(url, 'frp.tar.gz');
-  });
+  updateFrp();
 });
