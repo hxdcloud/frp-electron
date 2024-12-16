@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
 import { PageContainer } from '@ant-design/pro-components';
-import { Card, Row, Col, Progress, Statistic } from 'antd';
+import { Card, Col, Progress, Row, Statistic } from 'antd';
+import React, { useEffect, useState } from 'react';
 import './index.less';
 
 interface SystemInfo {
@@ -31,9 +31,11 @@ const HomePage: React.FC = () => {
     });
 
     // 订阅系统信息更新
-    const unsubscribe = (window as any).electronAPI.subscribeSystemInfo((info: SystemInfo) => {
-      setSystemInfo(info);
-    });
+    const unsubscribe = (window as any).electronAPI.subscribeSystemInfo(
+      (info: SystemInfo) => {
+        setSystemInfo(info);
+      },
+    );
 
     return () => {
       unsubscribe();
@@ -77,7 +79,9 @@ const HomePage: React.FC = () => {
               />
               <Statistic
                 title="总内存"
-                value={systemInfo ? formatBytes(systemInfo.memory.total) : '0 B'}
+                value={
+                  systemInfo ? formatBytes(systemInfo.memory.total) : '0 B'
+                }
               />
             </div>
           </Card>

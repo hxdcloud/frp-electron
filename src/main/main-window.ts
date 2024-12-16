@@ -1,8 +1,6 @@
 import createProtocol from '@/create-protocol';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import * as path from 'node:path';
-import * as fs from 'fs';
-import {download, CancelError} from 'electron-dl';
 
 export type IContext = {
   /** is allowed quit app */
@@ -34,7 +32,7 @@ function createMainWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
     },
   });
 
@@ -53,13 +51,10 @@ function createMainWindow() {
   if (isDevelopment) {
     mainWindow.loadURL('http://localhost:8000');
     // mainWindow.webContents.openDevTools();  // 开发阶段打开开发者工具
-
   } else {
     createProtocol('app');
     mainWindow.loadURL('app://./index.html');
   }
-
-
 }
 
 // quit app set allowQuitting to true

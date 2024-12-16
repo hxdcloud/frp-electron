@@ -1,10 +1,10 @@
 import { createMainWindow } from '@/main-window';
 import { app, protocol } from 'electron';
-import { updateFrp } from './update-frp';
 import { setupHomeHandlers } from './home';
+import { updateFrp } from './update-frp';
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'app',  
+    scheme: 'app',
     privileges: {
       secure: true,
       standard: true,

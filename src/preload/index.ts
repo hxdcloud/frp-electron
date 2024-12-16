@@ -3,8 +3,8 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 const apiKey = 'electronAPI';
 
 interface VersionInfo {
-    versions: string | null;
-    currentVersion: string | null;
+  versions: string | null;
+  currentVersion: string | null;
 }
 
 interface SystemInfo {
@@ -32,23 +32,30 @@ const api: any = {
   downloadFile: (url: string) => ipcRenderer.invoke('download-file', url),
   showDownloadPath: () => ipcRenderer.invoke('show-download-path'),
   onDownloadProgress: (callback: (progress: any) => void) => {
-    ipcRenderer.on('download-progress', (_event, progress) => callback(progress));
+    ipcRenderer.on('download-progress', (_event, progress) =>
+      callback(progress),
+    );
     return () => {
       ipcRenderer.removeListener('download-progress', callback);
     };
   },
   onExtractProgress: (callback: (progress: number) => void) => {
-    const listener = (_event: IpcRendererEvent, progress: number) => callback(progress);
+    const listener = (_event: IpcRendererEvent, progress: number) =>
+      callback(progress);
     ipcRenderer.on('extract-progress', listener);
     return () => {
       ipcRenderer.removeListener('extract-progress', listener);
     };
   },
-  getFrpVersion: () => ipcRenderer.invoke('get-frp-version') as Promise<VersionInfo>,
-  setCurrentVersion: (version: string) => ipcRenderer.invoke('set-current-version', version),
-  getSystemInfo: () => ipcRenderer.invoke('get-system-info') as Promise<SystemInfo>,
+  getFrpVersion: () =>
+    ipcRenderer.invoke('get-frp-version') as Promise<VersionInfo>,
+  setCurrentVersion: (version: string) =>
+    ipcRenderer.invoke('set-current-version', version),
+  getSystemInfo: () =>
+    ipcRenderer.invoke('get-system-info') as Promise<SystemInfo>,
   subscribeSystemInfo: (callback: (info: SystemInfo) => void) => {
-    const listener = (_event: IpcRendererEvent, info: SystemInfo) => callback(info);
+    const listener = (_event: IpcRendererEvent, info: SystemInfo) =>
+      callback(info);
     ipcRenderer.on('system-info-update', listener);
     return () => {
       ipcRenderer.removeListener('system-info-update', listener);
