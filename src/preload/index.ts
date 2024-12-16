@@ -61,6 +61,9 @@ const api: any = {
       ipcRenderer.removeListener('system-info-update', listener);
     };
   },
+  readFrpsConfig: () => ipcRenderer.invoke('read-frps-config'),
+  saveFrpsConfig: (config: any) =>
+    ipcRenderer.invoke('save-frps-config', config),
 };
 
 contextBridge.exposeInMainWorld(apiKey, api);

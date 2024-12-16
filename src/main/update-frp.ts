@@ -97,6 +97,14 @@ export const updateFrp = () => {
       });
 
       const filePath = downloadItem.getSavePath();
+
+      // 从下载URL中提取版本号
+      const versionMatch = url.match(/v\d+\.\d+\.\d+/);
+      if (!versionMatch) {
+        throw new Error('无法从URL中提取版本号');
+      }
+      const version = versionMatch[0];
+
       // 开始解压缩
       await extractTarGz(filePath, releasePath, (progress) => {
         event.sender.send('extract-progress', progress);
@@ -105,17 +113,34 @@ export const updateFrp = () => {
       // 删除下载的tar.gz文件
       fs.unlinkSync(filePath);
 
-      // 从下载URL中提取版本号
-      const versionMatch = url.match(/v\d+\.\d+\.\d+/);
-      if (versionMatch) {
-        const version = versionMatch[0];
-        // 写入版本信息到文件，保持版本号的排序
-        updateVersionFile(versionFile, version);
+      // 获取解压后的文件夹名称（通常是 frp_x.x.x_platform）
+      const extractedDirs = fs
+        .readdirSync(releasePath)
+        .filter(
+          (name) =>
+            name.startsWith('frp_') &&
+            fs.statSync(path.join(releasePath, name)).isDirectory(),
+        );
 
-        // 新增：更新 current-version 文件
-        const currentVersionFile = path.join(releasePath, 'current-version');
-        fs.writeFileSync(currentVersionFile, version, 'utf8'); // 写入当前版本
+      if (extractedDirs.length > 0) {
+        const oldPath = path.join(releasePath, extractedDirs[0]);
+        const newPath = path.join(releasePath, version);
+
+        // 如果目标文件夹已存在，先删除
+        if (fs.existsSync(newPath)) {
+          fs.rmSync(newPath, { recursive: true, force: true });
+        }
+
+        // 重命名文件夹
+        fs.renameSync(oldPath, newPath);
       }
+
+      // 写入版本信息到文件，保持版本号的排序
+      updateVersionFile(versionFile, version);
+
+      // 更新 current-version 文件
+      const currentVersionFile = path.join(releasePath, 'current-version');
+      fs.writeFileSync(currentVersionFile, version, 'utf8');
 
       return {
         downloadPath: filePath,
