@@ -3,6 +3,8 @@ import { CancelError, download } from 'electron-dl';
 import fs from 'fs';
 import path from 'path';
 import * as tar from 'tar';
+import extract from 'extract-zip';
+
 
 // 解压缩函数
 async function extractTarGz(
@@ -36,8 +38,26 @@ async function extractTarGz(
       });
   });
 }
+// 解压缩 zip 文件的函数
 
-// 更新版本文件，保持版本号的排序
+async function extractZip(
+  filePath: string,
+  destPath: string,
+  onProgress: (progress: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    extract(filePath, { dir: destPath, onEntry: (entry: any) => {
+      onProgress(entry.index / entry.total);
+    }})
+      .then(() => {
+        onProgress(1);
+        resolve();
+      })
+      .catch(reject);
+  });
+}
+
+// ���新版本文件，保持版本号的排序
 function updateVersionFile(versionFile: string, newVersion: string) {
   let versions: string[] = [];
 
@@ -105,12 +125,23 @@ export const updateFrp = () => {
       }
       const version = versionMatch[0];
 
-      // 开始解压缩
-      await extractTarGz(filePath, releasePath, (progress) => {
-        event.sender.send('extract-progress', progress);
-      });
+      // 新增：根据文件扩展名选择解压方法
+      const fileExtension = path.extname(filePath);
+      if (fileExtension === '.tar.gz') {
+        // 开始解压缩 tar.gz 文件
+        await extractTarGz(filePath, releasePath, (progress) => {
+          event.sender.send('extract-progress', progress);
+        });
+      } else if (fileExtension === '.zip') {
+        // 开始解压缩 zip 文件
+        await extractZip(filePath, releasePath, (progress) => {
+          event.sender.send('extract-progress', progress);
+        });
+      } else {
+        throw new Error('不支持的文件类型');
+      }
 
-      // 删除下载的tar.gz文件
+      // 删除下载的release文件
       fs.unlinkSync(filePath);
 
       // 获取解压后的文件夹名称（通常是 frp_x.x.x_platform）

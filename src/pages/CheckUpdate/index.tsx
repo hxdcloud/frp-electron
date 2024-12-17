@@ -79,9 +79,44 @@ const SystemInfoPage: React.FC = () => {
 
   const handleDownload = async () => {
     if (downloadVersion) {
+      let fileExtension = '';
+      let osPlatform = '';
+      let chipArchitecture = '';
+
+      // 根据平台和架构进行判断
+      if (platform === 'win32') {
+        osPlatform = 'windows';
+        fileExtension = 'zip';
+      } else if (platform === 'darwin') {
+        osPlatform = 'darwin';
+      } else if (platform === 'linux') {
+        osPlatform = 'linux';
+      } else if (platform === 'freebsd') {
+        osPlatform = 'freebsd';
+      } else if (platform === 'android') {
+        osPlatform = 'android';
+      } else {
+        message.error('不支持的操作系统');
+        return;
+      }
+
+      if (arch === 'x64' || arch === 'amd64') {
+        chipArchitecture = 'amd64';
+      } else if (arch === 'arm64') {
+        chipArchitecture = 'arm64';
+      } else if (arch === 'arm') {
+        chipArchitecture = 'arm';
+      } else if (arch === 'riscv64') {
+        chipArchitecture = 'riscv64';
+      } else {
+        message.error('不支持的架构');
+        return;
+      }
+
       const downloadUrl = `https://github.com/fatedier/frp/releases/download/${downloadVersion}/frp_${downloadVersion.substring(
         1,
-      )}_${platform}_${arch}.tar.gz`;
+      )}_${osPlatform}_${chipArchitecture}.${fileExtension}`;
+      
       setDownloadProgress(0);
       setExtractProgress(0);
       setIsDownloading(true);

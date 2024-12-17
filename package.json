@@ -34,6 +34,7 @@
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
     "electron-dl": "^4.0.0",
+    "extract-zip": "^2.0.1",
     "husky": "^9",
     "lint-staged": "^13.2.0",
     "prettier": "^2.8.7",

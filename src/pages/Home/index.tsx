@@ -1,90 +1,49 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { Card, Col, Progress, Row, Statistic } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Row, Col, Button, message } from 'antd';
+import React, { useState } from 'react';
 import './index.less';
 
-interface SystemInfo {
-  cpu: number;
-  memory: {
-    total: number;
-    used: number;
-    free: number;
-  };
-  load: number[];
-  network: {
-    rx_bytes: number;
-    tx_bytes: number;
-  };
-  connections: {
-    tcp: number;
-    udp: number;
-  };
-}
-
 const HomePage: React.FC = () => {
-  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
+  const [isFrpsRunning, setIsFrpsRunning] = useState(false);
 
-  useEffect(() => {
-    // 初始获取系统信息
-    (window as any).electronAPI.getSystemInfo().then((info: SystemInfo) => {
-      setSystemInfo(info);
-    });
-
-    // 订阅系统信息更新
-    const unsubscribe = (window as any).electronAPI.subscribeSystemInfo(
-      (info: SystemInfo) => {
-        setSystemInfo(info);
-      },
-    );
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  const formatBytes = (bytes: number) => {
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    if (bytes === 0) return '0 B';
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+  const handleStartFrps = async () => {
+    try {
+      await window.electronAPI.startFrps();
+      setIsFrpsRunning(true);
+    } catch (error) {
+      message.error('启动 FRPS 失败：' + (error as Error).message);
+    }
   };
 
-  const memoryUsagePercent = systemInfo
-    ? (systemInfo.memory.used / systemInfo.memory.total) * 100
-    : 0;
+  const handleStopFrps = async () => {
+    try {
+      await window.electronAPI.stopFrps();
+      setIsFrpsRunning(false);
+    } catch (error) {
+      message.error('停止 FRPS 失败：' + (error as Error).message);
+    }
+  };
 
   return (
     <PageContainer>
       <Row gutter={[16, 16]}>
-        <Col span={12}>
-          <Card title="CPU 使用率">
-            <Progress
-              type="dashboard"
-              percent={Number(systemInfo?.cpu.toFixed(1))}
-              format={(percent) => `${percent}%`}
-            />
-          </Card>
+        <Col>
+          <Button 
+            type="primary"
+            onClick={handleStartFrps}
+            disabled={isFrpsRunning}
+          >
+            启动 FRPS
+          </Button>
         </Col>
-        <Col span={12}>
-          <Card title="内存使用率">
-            <Progress
-              type="dashboard"
-              percent={Number(memoryUsagePercent.toFixed(1))}
-              format={(percent) => `${percent}%`}
-            />
-            <div style={{ marginTop: 16 }}>
-              <Statistic
-                title="已用内存"
-                value={systemInfo ? formatBytes(systemInfo.memory.used) : '0 B'}
-              />
-              <Statistic
-                title="总内存"
-                value={
-                  systemInfo ? formatBytes(systemInfo.memory.total) : '0 B'
-                }
-              />
-            </div>
-          </Card>
+        <Col>
+          <Button 
+            danger
+            onClick={handleStopFrps}
+            disabled={!isFrpsRunning}
+          >
+            停止 FRPS
+          </Button>
         </Col>
       </Row>
     </PageContainer>

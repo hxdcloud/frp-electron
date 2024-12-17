@@ -183,7 +183,12 @@ export const readFrpsConfig = (): FrpsConfig => {
     const { configPath } = getFrpsConfigPath();
     try {
         const content = fs.readFileSync(configPath, 'utf-8');
-        return content ? toml.parse(content) : defaultConfig;
+        if (!content.trim()) {
+            console.log('配置文件为空，使用默认配置');
+            return defaultConfig;
+        }
+        const config = toml.parse(content);
+        return config || defaultConfig;
     } catch (error) {
         console.error('读取配置文件失败:', error);
         return defaultConfig;
@@ -221,4 +226,12 @@ export const setupFrpsConfigHandlers = () => {
     ipcMain.handle('save-frps-config', async (_event, config: FrpsConfig) => {
         await saveFrpsConfig(config);
     });
+};
+
+// 添加 createReleaseFolder 函数
+export const createReleaseFolder = () => {
+  const releasePath = path.join(app.getPath('home'), '.frp-electron/frp-release');
+  if (!fs.existsSync(releasePath)) {
+    fs.mkdirSync(releasePath, { recursive: true });
+  }
 };

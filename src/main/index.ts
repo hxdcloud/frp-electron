@@ -1,8 +1,9 @@
-import { createMainWindow } from '@/main-window';
-import { app, protocol } from 'electron';
+import { createMainWindow as createMainWindowFromModule } from '@/main-window';
+import { app, protocol, ipcMain, BrowserWindow } from 'electron';
 import { ensureConfigDir, setupFrpsConfigHandlers } from './frps-config';
 import { setupHomeHandlers } from './home';
 import { updateFrp } from './update-frp';
+import path from 'path';
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -25,9 +26,34 @@ app.whenReady().then(async () => {
     // 然后设置其他处理程序
     setupHomeHandlers();
     setupFrpsConfigHandlers();
-    createMainWindow();
+    createMainWindowFromModule();
     updateFrp();
   } catch (error) {
     console.error('应用初始化失败:', error);
+  }
+});
+
+const createMainWindow = () => {
+  const mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: true,
+    },
+  });
+
+  // 设置 global.mainWindow
+  global.mainWindow = mainWindow;
+
+  mainWindow.loadURL('http://localhost:8000');
+};
+
+// 确保在应用退出时清理
+app.on('window-all-closed', () => {
+  global.mainWindow = null;
+  if (process.platform !== 'darwin') {
+    app.quit();
   }
 });
