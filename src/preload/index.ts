@@ -5,6 +5,16 @@ interface VersionInfo {
   currentVersion: string | null;
 }
 
+interface FrpLog {
+  type: 'info' | 'error';
+  message: string;
+}
+
+interface FrpStatus {
+  running: boolean;
+  exitCode: number | null;
+}
+
 // 定义统一的 electronAPI 接口
 const electronAPI = {
   // 版本相关
@@ -37,14 +47,40 @@ const electronAPI = {
   // Frps 配置和控制
   readFrpsConfig: () => ipcRenderer.invoke('read-frps-config'),
   saveFrpsConfig: (config: any) => ipcRenderer.invoke('save-frps-config', config),
-  startFrps: () => ipcRenderer.invoke('start-frps'),
+  startFrps: (configPath: string) => ipcRenderer.invoke('start-frps', configPath),
   stopFrps: () => ipcRenderer.invoke('stop-frps'),
+  getFrpsStatus: () => ipcRenderer.invoke('get-frps-status'),
+  onFrpsLog: (callback: (log: FrpLog) => void) => {
+    ipcRenderer.on('frps-log', (_event, log) => callback(log));
+    return () => {
+      ipcRenderer.removeListener('frps-log', callback);
+    };
+  },
+  onFrpsStatus: (callback: (status: FrpStatus) => void) => {
+    ipcRenderer.on('frps-status', (_event, status) => callback(status));
+    return () => {
+      ipcRenderer.removeListener('frps-status', callback);
+    };
+  },
   
   // Frpc 配置和控制
   readFrpcConfig: () => ipcRenderer.invoke('read-frpc-config'),
   saveFrpcConfig: (config: any) => ipcRenderer.invoke('save-frpc-config', config),
-  startFrpc: () => ipcRenderer.invoke('start-frpc'),
+  startFrpc: (configPath: string) => ipcRenderer.invoke('start-frpc', configPath),
   stopFrpc: () => ipcRenderer.invoke('stop-frpc'),
+  getFrpcStatus: () => ipcRenderer.invoke('get-frpc-status'),
+  onFrpcLog: (callback: (log: FrpLog) => void) => {
+    ipcRenderer.on('frpc-log', (_event, log) => callback(log));
+    return () => {
+      ipcRenderer.removeListener('frpc-log', callback);
+    };
+  },
+  onFrpcStatus: (callback: (status: FrpStatus) => void) => {
+    ipcRenderer.on('frpc-status', (_event, status) => callback(status));
+    return () => {
+      ipcRenderer.removeListener('frpc-status', callback);
+    };
+  },
   
   // 添加检查FRP版本的方法
   checkFrpVersion: () => ipcRenderer.invoke('check-frp-version'),
