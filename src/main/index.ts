@@ -1,8 +1,10 @@
 import { createMainWindow as createMainWindowFromModule } from '@/main-window';
 import { app, protocol, ipcMain, BrowserWindow } from 'electron';
-import { ensureConfigDir, setupFrpsConfigHandlers } from './frps-config';
+import { ensureConfigDir as ensureFrpsConfigDir, setupFrpsConfigHandlers } from './frps-config';
+import { ensureConfigDir as ensureFrpcConfigDir, setupFrpcConfigHandlers } from './frpc-config';
 import { setupHomeHandlers } from './home';
 import { updateFrp } from './update-frp';
+import { checkCurrentVersion } from './frp-manage';
 import path from 'path';
 
 protocol.registerSchemesAsPrivileged([
@@ -21,11 +23,13 @@ protocol.registerSchemesAsPrivileged([
 app.whenReady().then(async () => {
   try {
     // 首先确保配置目录和文件存在
-    await ensureConfigDir();
+    await ensureFrpsConfigDir();
+    await ensureFrpcConfigDir();
     
     // 然后设置其他处理程序
     setupHomeHandlers();
     setupFrpsConfigHandlers();
+    setupFrpcConfigHandlers();
     createMainWindowFromModule();
     updateFrp();
   } catch (error) {
@@ -56,4 +60,9 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+// 设置FRP版本检查处理程序
+ipcMain.handle('check-frp-version', async () => {
+  return checkCurrentVersion();
 });

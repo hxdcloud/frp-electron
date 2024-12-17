@@ -39,6 +39,15 @@ const electronAPI = {
   saveFrpsConfig: (config: any) => ipcRenderer.invoke('save-frps-config', config),
   startFrps: () => ipcRenderer.invoke('start-frps'),
   stopFrps: () => ipcRenderer.invoke('stop-frps'),
+  
+  // Frpc 配置和控制
+  readFrpcConfig: () => ipcRenderer.invoke('read-frpc-config'),
+  saveFrpcConfig: (config: any) => ipcRenderer.invoke('save-frpc-config', config),
+  startFrpc: () => ipcRenderer.invoke('start-frpc'),
+  stopFrpc: () => ipcRenderer.invoke('stop-frpc'),
+  
+  // 添加检查FRP版本的方法
+  checkFrpVersion: () => ipcRenderer.invoke('check-frp-version'),
 };
 
 // 将 API 暴露给渲染进程

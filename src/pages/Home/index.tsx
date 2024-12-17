@@ -1,51 +1,59 @@
+import React, { useEffect, useState } from 'react';
 import { PageContainer } from '@ant-design/pro-components';
-import { Row, Col, Button, message } from 'antd';
-import React, { useState } from 'react';
-import './index.less';
+import { Card, Typography, Space, Tag } from 'antd';
+
+const { Text } = Typography;
 
 const HomePage: React.FC = () => {
-  const [isFrpsRunning, setIsFrpsRunning] = useState(false);
+  const [versionInfo, setVersionInfo] = useState<{
+    hasVersion: boolean;
+    version: string | null;
+    hasFrps: boolean;
+    hasFrpc: boolean;
+  }>({
+    hasVersion: false,
+    version: null,
+    hasFrps: false,
+    hasFrpc: false,
+  });
 
-  const handleStartFrps = async () => {
-    try {
-      await window.electronAPI.startFrps();
-      setIsFrpsRunning(true);
-    } catch (error) {
-      message.error('启动 FRPS 失败：' + (error as Error).message);
-    }
-  };
-
-  const handleStopFrps = async () => {
-    try {
-      await window.electronAPI.stopFrps();
-      setIsFrpsRunning(false);
-    } catch (error) {
-      message.error('停止 FRPS 失败：' + (error as Error).message);
-    }
-  };
+  useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        const info = await window.electronAPI.checkFrpVersion();
+        setVersionInfo(info);
+      } catch (error) {
+        console.error('检查FRP版本失败:', error);
+      }
+    };
+    checkVersion();
+  }, []);
 
   return (
     <PageContainer>
-      <Row gutter={[16, 16]}>
-        <Col>
-          <Button 
-            type="primary"
-            onClick={handleStartFrps}
-            disabled={isFrpsRunning}
-          >
-            启动 FRPS
-          </Button>
-        </Col>
-        <Col>
-          <Button 
-            danger
-            onClick={handleStopFrps}
-            disabled={!isFrpsRunning}
-          >
-            停止 FRPS
-          </Button>
-        </Col>
-      </Row>
+      <Card title="FRP 状态">
+        <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+          <div>
+            <Text strong>当前版本：</Text>
+            {versionInfo.hasVersion ? (
+              <Tag color="blue">{versionInfo.version}</Tag>
+            ) : (
+              <Tag color="red">未安装</Tag>
+            )}
+          </div>
+          <div>
+            <Text strong>组件状态：</Text>
+            <Space>
+              <Tag color={versionInfo.hasFrps ? 'success' : 'error'}>
+                FRPS {versionInfo.hasFrps ? '已安装' : '未安装'}
+              </Tag>
+              <Tag color={versionInfo.hasFrpc ? 'success' : 'error'}>
+                FRPC {versionInfo.hasFrpc ? '已安装' : '未安装'}
+              </Tag>
+            </Space>
+          </div>
+        </Space>
+      </Card>
     </PageContainer>
   );
 };

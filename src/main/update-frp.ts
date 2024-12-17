@@ -5,8 +5,6 @@ import path from 'path';
 import * as tar from 'tar';
 import extract from 'extract-zip';
 
-
-// 解压缩函数
 async function extractTarGz(
   filePath: string,
   destPath: string,
@@ -34,11 +32,11 @@ async function extractTarGz(
         resolve();
       })
       .on('error', (err) => {
+        console.error('[extractTarGz] 解压失败:', err);
         reject(err);
       });
   });
 }
-// 解压缩 zip 文件的函数
 
 async function extractZip(
   filePath: string,
@@ -47,31 +45,31 @@ async function extractZip(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     extract(filePath, { dir: destPath, onEntry: (entry: any) => {
-      onProgress(entry.index / entry.total);
+      const progress = entry.index / entry.total;
+      onProgress(progress);
     }})
       .then(() => {
         onProgress(1);
         resolve();
       })
-      .catch(reject);
+      .catch((err) => {
+        console.error('[extractZip] ZIP解压失败:', err);
+        reject(err);
+      });
   });
 }
 
-// ���新版本文件，保持版本号的排序
 function updateVersionFile(versionFile: string, newVersion: string) {
   let versions: string[] = [];
 
-  // 读取现有版本
   if (fs.existsSync(versionFile)) {
     versions = fs.readFileSync(versionFile, 'utf8').split('\n').filter(Boolean);
   }
 
-  // 添加新版本并去重
   if (!versions.includes(newVersion)) {
     versions.push(newVersion);
   }
 
-  // 按照版本号排序（最新到最旧）
   versions.sort((a, b) => {
     const versionA = a.match(/v(\d+)\.(\d+)\.(\d+)/);
     const versionB = b.match(/v(\d+)\.(\d+)\.(\d+)/);
@@ -85,20 +83,17 @@ function updateVersionFile(versionFile: string, newVersion: string) {
     return 0;
   });
 
-  // 写入版本信息到文件
   fs.writeFileSync(versionFile, versions.join('\n'), 'utf8');
 }
 
 export const updateFrp = () => {
   ipcMain.handle('download-file', async (event, url) => {
-    console.log('download-file', url);
     const releasePath = path.join(
       app.getPath('home'),
       '.frp-electron/frp-release',
     );
     const versionFile = path.join(releasePath, 'frp-version');
 
-    // 确保目录存在
     if (!fs.existsSync(releasePath)) {
       fs.mkdirSync(releasePath, { recursive: true });
     }
@@ -118,22 +113,19 @@ export const updateFrp = () => {
 
       const filePath = downloadItem.getSavePath();
 
-      // 从下载URL中提取版本号
       const versionMatch = url.match(/v\d+\.\d+\.\d+/);
       if (!versionMatch) {
         throw new Error('无法从URL中提取版本号');
       }
       const version = versionMatch[0];
 
-      // 新增：根据文件扩展名选择解压方法
       const fileExtension = path.extname(filePath);
-      if (fileExtension === '.tar.gz') {
-        // 开始解压缩 tar.gz 文件
+
+      if (fileExtension === '.gz') {
         await extractTarGz(filePath, releasePath, (progress) => {
           event.sender.send('extract-progress', progress);
         });
       } else if (fileExtension === '.zip') {
-        // 开始解压缩 zip 文件
         await extractZip(filePath, releasePath, (progress) => {
           event.sender.send('extract-progress', progress);
         });
@@ -141,10 +133,8 @@ export const updateFrp = () => {
         throw new Error('不支持的文件类型');
       }
 
-      // 删除下载的release文件
       fs.unlinkSync(filePath);
 
-      // 获取解压后的文件夹名称（通常是 frp_x.x.x_platform）
       const extractedDirs = fs
         .readdirSync(releasePath)
         .filter(
@@ -157,19 +147,15 @@ export const updateFrp = () => {
         const oldPath = path.join(releasePath, extractedDirs[0]);
         const newPath = path.join(releasePath, version);
 
-        // 如果目标文件夹已存在，先删除
         if (fs.existsSync(newPath)) {
           fs.rmSync(newPath, { recursive: true, force: true });
         }
 
-        // 重命名文件夹
         fs.renameSync(oldPath, newPath);
       }
 
-      // 写入版本信息到文件，保持版本号的排序
       updateVersionFile(versionFile, version);
 
-      // 更新 current-version 文件
       const currentVersionFile = path.join(releasePath, 'current-version');
       fs.writeFileSync(currentVersionFile, version, 'utf8');
 
@@ -186,10 +172,10 @@ export const updateFrp = () => {
   });
 
   ipcMain.handle('show-download-path', () => {
-    return path.join(app.getPath('home'), '.frp-electron/frp-release');
+    const downloadPath = path.join(app.getPath('home'), '.frp-electron/frp-release');
+    return downloadPath;
   });
 
-  // 新增：获取当前使用的frp版本
   ipcMain.handle('get-frp-version', () => {
     const releasePath = path.join(
       app.getPath('home'),
@@ -215,7 +201,7 @@ export const updateFrp = () => {
         currentVersion,
       };
     } catch (error) {
-      console.error('读取版本文件失败:', error);
+      console.error('[get-frp-version] 读取版本文件失败:', error);
       return {
         versions: null,
         currentVersion: null,
@@ -223,7 +209,6 @@ export const updateFrp = () => {
     }
   });
 
-  // 添加设置当前版本的处理函数
   ipcMain.handle('set-current-version', async (_event, version: string) => {
     const releasePath = path.join(
       app.getPath('home'),
@@ -235,7 +220,7 @@ export const updateFrp = () => {
       fs.writeFileSync(currentVersionFile, version, 'utf8');
       return true;
     } catch (error) {
-      console.error('写入当前版本失败:', error);
+      console.error('[set-current-version] 写入当前版本失败:', error);
       throw error;
     }
   });

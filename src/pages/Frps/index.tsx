@@ -153,14 +153,14 @@ const FrpsConfig: React.FC = () => {
               label="HTTP代理端口"
               tooltip="HTTP类型代理监听的端口"
               colProps={{ span: 8 }}
-              rules={[{ required: true, message: '请输入HTTP代理端口' }, { type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
+              rules={[{ type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
             />
             <ProFormDigit
               name="vhostHTTPSPort"
               label="HTTPS代理端口"
               tooltip="HTTPS类型代理监听的端口"
               colProps={{ span: 8 }}
-              rules={[{ required: true, message: '请输入HTTPS代理端口' }, { type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
+              rules={[{ type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
             />
             <ProFormDigit
               name="vhostHTTPTimeout"
@@ -183,7 +183,7 @@ const FrpsConfig: React.FC = () => {
               label="最大端口数"
               tooltip="限制单个客户端最大同时存在的代理数"
               colProps={{ span: 8 }}
-              rules={[{ required: true, message: '请输入最大端口数' }, { type: 'number', min: 1, message: '最大端口数应大于0' }]}
+              rules={[{ type: 'number', min: 1, message: '最大端口数应大于0' }]}
             />
             <ProFormDigit
               name="userConnTimeout"
@@ -207,13 +207,13 @@ const FrpsConfig: React.FC = () => {
                   name="start"
                   label="起始端口"
                   colProps={{ span: 12 }}
-                  rules={[{ required: true, message: '请输入起始端口' }, { type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
+                  rules={[{ type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
                 />
                 <ProFormDigit
                   name="end"
                   label="结束端口"
                   colProps={{ span: 12 }}
-                  rules={[{ required: true, message: '请输入结束端口' }, { type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
+                  rules={[{ type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
                 />
               </ProFormGroup>
             </ProFormList>
@@ -236,7 +236,7 @@ const FrpsConfig: React.FC = () => {
               name={['webServer', 'port']}
               label="Web服务端口"
               colProps={{ span: 12 }}
-              rules={[{ required: true, message: '请输入Web服务端口' }, { type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
+              rules={[{ type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
             />
           </ProFormGroup>
         </ProForm>

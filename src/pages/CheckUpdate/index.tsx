@@ -79,7 +79,7 @@ const SystemInfoPage: React.FC = () => {
 
   const handleDownload = async () => {
     if (downloadVersion) {
-      let fileExtension = '';
+      let fileExtension = 'tar.gz';
       let osPlatform = '';
       let chipArchitecture = '';
 
