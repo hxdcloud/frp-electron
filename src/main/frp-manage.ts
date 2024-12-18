@@ -1,4 +1,4 @@
-import { app, ipcMain } from 'electron';
+import { app, ipcMain, BrowserWindow } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { spawn, ChildProcess } from 'child_process';
@@ -120,40 +120,47 @@ export const startFrps = async (): Promise<boolean> => {
     frpsProcess = spawn(execPath, ['-c', configPath]);
     
     // 通知前端进程已启动
-    global.mainWindow?.webContents.send('frps-status', { running: true, exitCode: null });
+    const win = BrowserWindow.getFocusedWindow();
+    if (!win) {
+      throw new Error('No focused window available for download');
+    }
+    win.webContents.send('frps-status', { running: true, exitCode: null });
 
     // 处理输出
     frpsProcess.stdout?.on('data', (data) => {
       const log = data.toString();
       console.log('FRPS输出:', log);
-      global.mainWindow?.webContents.send('frps-log', { type: 'info', message: log });
+      win.webContents.send('frps-log', { type: 'info', message: log });
     });
 
     frpsProcess.stderr?.on('data', (data) => {
       const log = data.toString();
       console.error('FRPS错误输出:', log);
-      global.mainWindow?.webContents.send('frps-log', { type: 'error', message: log });
+      win.webContents.send('frps-log', { type: 'error', message: log });
     });
 
     // 处理进程退出
     frpsProcess.on('exit', (code) => {
       console.log('FRPS进程退出，退出代码:', code);
-      global.mainWindow?.webContents.send('frps-status', { running: false, exitCode: code });
+      win.webContents.send('frps-status', { running: false, exitCode: code });
       frpsProcess = null;
     });
 
     // 处理进程错误
     frpsProcess.on('error', (err) => {
       console.error('FRPS进程错误:', err);
-      global.mainWindow?.webContents.send('frps-log', { type: 'error', message: err.message });
-      global.mainWindow?.webContents.send('frps-status', { running: false, exitCode: -1 });
+      win.webContents.send('frps-log', { type: 'error', message: err.message });
+      win.webContents.send('frps-status', { running: false, exitCode: -1 });
       frpsProcess = null;
     });
 
     return true;
   } catch (error) {
     console.error('启动FRPS失败:', error);
-    global.mainWindow?.webContents.send('frps-status', { running: false, exitCode: -1 });
+    const win = BrowserWindow.getFocusedWindow();
+    if (win) {
+      win.webContents.send('frps-status', { running: false, exitCode: -1 });
+    }
     return false;
   }
 };
@@ -187,40 +194,47 @@ export const startFrpc = async (): Promise<boolean> => {
     frpcProcess = spawn(execPath, ['-c', configPath]);
     
     // 通知前端进程已启动
-    global.mainWindow?.webContents.send('frpc-status', { running: true, exitCode: null });
+    const win = BrowserWindow.getFocusedWindow();
+    if (!win) {
+      throw new Error('No focused window available for download');
+    }
+    win.webContents.send('frpc-status', { running: true, exitCode: null });
 
     // 处理输出
     frpcProcess.stdout?.on('data', (data) => {
       const log = data.toString();
       console.log('FRPC输出:', log);
-      global.mainWindow?.webContents.send('frpc-log', { type: 'info', message: log });
+      win.webContents.send('frpc-log', { type: 'info', message: log });
     });
 
     frpcProcess.stderr?.on('data', (data) => {
       const log = data.toString();
       console.error('FRPC错误输出:', log);
-      global.mainWindow?.webContents.send('frpc-log', { type: 'error', message: log });
+      win.webContents.send('frpc-log', { type: 'error', message: log });
     });
 
     // 处理进程退出
     frpcProcess.on('exit', (code) => {
       console.log('FRPC进程退出，退出代码:', code);
-      global.mainWindow?.webContents.send('frpc-status', { running: false, exitCode: code });
+      win.webContents.send('frpc-status', { running: false, exitCode: code });
       frpcProcess = null;
     });
 
     // 处理进程错误
     frpcProcess.on('error', (err) => {
       console.error('FRPC进程错误:', err);
-      global.mainWindow?.webContents.send('frpc-log', { type: 'error', message: err.message });
-      global.mainWindow?.webContents.send('frpc-status', { running: false, exitCode: -1 });
+      win.webContents.send('frpc-log', { type: 'error', message: err.message });
+      win.webContents.send('frpc-status', { running: false, exitCode: -1 });
       frpcProcess = null;
     });
 
     return true;
   } catch (error) {
     console.error('启动FRPC失败:', error);
-    global.mainWindow?.webContents.send('frpc-status', { running: false, exitCode: -1 });
+    const win = BrowserWindow.getFocusedWindow();
+    if (win) {
+      win.webContents.send('frpc-status', { running: false, exitCode: -1 });
+    }
     return false;
   }
 };

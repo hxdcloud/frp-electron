@@ -50,7 +50,7 @@ function createMainWindow() {
   });
   if (isDevelopment) {
     mainWindow.loadURL('http://localhost:8000');
-    // mainWindow.webContents.openDevTools();  // 开发阶段打开开发者工具
+    mainWindow.webContents.openDevTools();  // 开发阶段打开开发者工具
   } else {
     createProtocol('app');
     mainWindow.loadURL('app://./index.html');
