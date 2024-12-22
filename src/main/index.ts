@@ -5,6 +5,7 @@ import { ensureConfigDir as ensureFrpcConfigDir, setupFrpcConfigHandlers } from 
 import { setupHomeHandlers } from './home';
 import { updateFrp } from './update-frp';
 import { checkCurrentVersion, setupFrpManageHandlers } from './frp-manage';
+import { setupProxyManageHandlers } from './proxy-manage';
 import path from 'path';
 
 protocol.registerSchemesAsPrivileged([
@@ -31,6 +32,7 @@ app.whenReady().then(async () => {
     setupFrpsConfigHandlers();
     setupFrpcConfigHandlers();
     setupFrpManageHandlers();
+    setupProxyManageHandlers();
     createMainWindowFromModule();
     updateFrp();
   } catch (error) {

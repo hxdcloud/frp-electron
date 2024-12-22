@@ -207,14 +207,42 @@ export const readFrpcConfig = (): FrpcConfig => {
 export const saveFrpcConfig = async (config: FrpcConfig): Promise<void> => {
     const { configPath } = getFrpcConfigPath();
     try {
-        // 转换配置对象为TOML格式
-        const tomlContent = objectToToml(config).join('\n');
+        // 读取现有文件内容
+        let existingContent = '';
+        try {
+            existingContent = fs.readFileSync(configPath, 'utf-8');
+        } catch (error) {
+            console.log('配置文件不存在，将创建新文件');
+        }
+
+        // 提取现有的代理配置
+        const proxyConfigs: string[] = [];
+        const proxyBlockRegex = /\[\[proxies\]\]([\s\S]*?)(?=\[\[proxies\]\]|$)/g;
+        const matches = existingContent.matchAll(proxyBlockRegex);
+        for (const match of matches) {
+            if (match[0].trim()) {
+                proxyConfigs.push(match[0].trim());
+            }
+        }
+
+        // 移除config中的proxies字段，因为我们会单独处理代理配置
+        const { proxies, ...globalConfig } = config;
+
+        // 转换全局配置为TOML格式
+        const globalConfigContent = objectToToml(globalConfig).join('\n');
+
+        // 组合新的配置内容
+        let newContent = globalConfigContent;
+        
+        // 如果有代理配置，添加到文件末尾
+        if (proxyConfigs.length > 0) {
+            newContent += '\n\n' + proxyConfigs.join('\n\n');
+        }
 
         // 写入文件
-        await fs.promises.writeFile(configPath, tomlContent, 'utf-8');
+        await fs.promises.writeFile(configPath, newContent, 'utf-8');
 
         console.log('配置已保存到:', configPath);
-        console.log('配置内容:', tomlContent);
     } catch (error) {
         console.error('保存配置文件失败:', error);
         throw error;

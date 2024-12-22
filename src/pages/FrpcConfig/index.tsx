@@ -80,7 +80,7 @@ const FrpcConfig: React.FC = () => {
               label="服务器地址"
               tooltip="FRP服务器地址"
               placeholder="请输入服务器地址"
-              colProps={{ span: 12 }}
+              colProps={{ span: 8 }}
               rules={[{ required: true, message: '请输入服务器地址' }, ipAddressRule]}
             />
             <ProFormDigit
@@ -88,7 +88,7 @@ const FrpcConfig: React.FC = () => {
               label="服务器端口"
               tooltip="FRP服务器端口，默认为7000"
               placeholder="请输入服务器端口"
-              colProps={{ span: 12 }}
+              colProps={{ span: 8 }}
               rules={[{ required: true, message: '请输入服务器端口' }, { type: 'number', min: 1, max: 65535, message: '端口范围应在 1 到 65535 之间' }]}
             />
             <ProFormText
@@ -96,7 +96,7 @@ const FrpcConfig: React.FC = () => {
               label="用户名"
               tooltip="用户名，设置此参数后，代理名称会被修改为 {user}.{proxyName}"
               placeholder="请输入用户名"
-              colProps={{ span: 12 }}
+              colProps={{ span: 8 }}
             />
           </ProFormGroup>
 

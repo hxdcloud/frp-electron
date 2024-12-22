@@ -84,6 +84,13 @@ const electronAPI = {
   
   // 添加检查FRP版本的方法
   checkFrpVersion: () => ipcRenderer.invoke('check-frp-version'),
+  
+  // 代理管理相关
+  getProxyList: () => ipcRenderer.invoke('get-proxy-list'),
+  getProxyConfig: (name: string) => ipcRenderer.invoke('get-proxy-config', name),
+  addProxy: (config: any) => ipcRenderer.invoke('add-proxy', config),
+  updateProxy: (name: string, config: any) => ipcRenderer.invoke('update-proxy', name, config),
+  deleteProxy: (name: string) => ipcRenderer.invoke('delete-proxy', name),
 };
 
 // 将 API 暴露给渲染进程
