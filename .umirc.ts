@@ -24,12 +24,17 @@ export default defineConfig({
     {
       name: '服务端配置',
       path: '/frps-config',
-      component: './Frps',
+      component: './FrpsConfig',
     },
     {
       name: '客户端配置',
       path: '/frpc-config',
-      component: './Frpc',
+      component: './FrpcConfig',
+    },
+    {
+      name: '代理列表',
+      path: '/frpc-proxy',
+      component: './FrpcProxy',
     },
     {
       name: '检查更新',

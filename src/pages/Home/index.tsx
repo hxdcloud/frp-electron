@@ -7,6 +7,7 @@ import {
 import { Button, Modal, Space, Tag, Typography, message } from 'antd';
 import { ReloadOutlined, WarningOutlined, EditOutlined, FileTextOutlined } from '@ant-design/icons';
 import { history } from '@umijs/max';
+import { MenuModeEnum } from '@/constants';
 
 const { Text, Link } = Typography;
 
@@ -54,6 +55,11 @@ const Home: React.FC = () => {
   const [configModalVisible, setConfigModalVisible] = useState<boolean>(false);
   const [currentConfigType, setCurrentConfigType] = useState<'frps' | 'frpc'>('frps');
   const [configContent, setConfigContent] = useState<string>('');
+
+  // 添加模式状态
+  const [menuMode, setMenuMode] = useState<string>(
+    localStorage.getItem('menuMode') || MenuModeEnum.SERVER
+  );
 
   // 添加日志自动滚动到底部的效果
   useEffect(() => {
@@ -362,7 +368,7 @@ const Home: React.FC = () => {
                   </>
                 )}
 
-                {/* FRPS 代理配置 */}
+                {/* FRPS ��理配置 */}
                 <ProDescriptions.Item 
                   label="HTTP代理端口" 
                   tooltip="HTTP类型代理监听的端口"
@@ -490,6 +496,18 @@ const Home: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const currentMode = localStorage.getItem('menuMode') || MenuModeEnum.SERVER;
+      setMenuMode(currentMode);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   return (
     <PageContainer
       extra={[
@@ -528,273 +546,276 @@ const Home: React.FC = () => {
           </ProDescriptions>
         </ProCard>
 
-        {/* FRPS状态卡片 */}
-        <ProCard 
-          title="FRPS服务" 
-          headerBordered
-          actions={[
-            <Space key="actions" size="middle" style={{ width: '100%', justifyContent: 'flex-start', marginLeft: '20px' }}>
-              <Button
-                type="primary"
-                onClick={handleStartFrps}
-                disabled={!versionInfo.hasFrps || frpsStatus || isLoading}
-              >
-                启动
-              </Button>
-              <Button
-                danger
-                onClick={handleStopFrps}
-                disabled={!versionInfo.hasFrps || !frpsStatus || isLoading}
-              >
-                停止
-              </Button>
-              <Button
-                onClick={() => showLogs('frps')}
-                disabled={!versionInfo.hasFrps}
-              >
-                查看日志
-              </Button>
-              <Button
-                type="link"
-                icon={<EditOutlined />}
-                onClick={() => goToConfig('frps')}
-              >
-                编辑配置
-              </Button>
-              <Button
-                type="link"
-                icon={<FileTextOutlined />}
-                onClick={() => showConfig('frps')}
-              >
-                查看源文件
-              </Button>
-            </Space>
-          ]}
-        >
-          <ProDescriptions column={2}>
-            <ProDescriptions.Item label="安装状态">
-              <Tag color={versionInfo.hasFrps ? 'success' : 'error'}>
-                {versionInfo.hasFrps ? '已安装' : '未安装'}
-              </Tag>
-            </ProDescriptions.Item>
-            <ProDescriptions.Item label="运行状态">
-              <Tag color={frpsStatus ? 'success' : 'error'}>
-                {frpsStatus ? '运行中' : '已停止'}
-              </Tag>
-            </ProDescriptions.Item>
-            {/* 配置信息 */}
-            {(() => {
-              try {
-                const configObj = JSON.parse(frpsConfig);
-                return (
-                  <>
-                    <ProDescriptions.Item 
-                      label="监听地址" 
-                      tooltip="服务端监听地址"
-                    >
-                      {configObj.bindAddr || '0.0.0.0'}
-                    </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="监听端口" 
-                      tooltip="服务端监听端口"
-                    >
-                      {configObj.bindPort || 7000}
-                    </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="认证方式" 
-                      tooltip="服务端认证方式"
-                    >
-                      {configObj.auth?.method || 'token'}
-                    </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="认证Token" 
-                      tooltip="服务端认证Token"
-                    >
-                      {configObj.auth?.token ? (
-                        <Tag color="blue">{configObj.auth.token}</Tag>
-                      ) : (
-                        <Tag color="red">未设置</Tag>
+        {/* 根据当前模式显示对应的服务卡片 */}
+        {menuMode === MenuModeEnum.SERVER ? (
+          // FRPS服务卡片
+          <ProCard 
+            title="FRPS服务" 
+            headerBordered
+            actions={[
+              <Space key="actions" size="middle" style={{ width: '100%', justifyContent: 'flex-start', marginLeft: '20px' }}>
+                <Button
+                  type="primary"
+                  onClick={handleStartFrps}
+                  disabled={!versionInfo.hasFrps || frpsStatus || isLoading}
+                >
+                  启动
+                </Button>
+                <Button
+                  danger
+                  onClick={handleStopFrps}
+                  disabled={!versionInfo.hasFrps || !frpsStatus || isLoading}
+                >
+                  停止
+                </Button>
+                <Button
+                  onClick={() => showLogs('frps')}
+                  disabled={!versionInfo.hasFrps}
+                >
+                  查看日志
+                </Button>
+                <Button
+                  type="link"
+                  icon={<EditOutlined />}
+                  onClick={() => goToConfig('frps')}
+                >
+                  编辑配置
+                </Button>
+                <Button
+                  type="link"
+                  icon={<FileTextOutlined />}
+                  onClick={() => showConfig('frps')}
+                >
+                  查看源文件
+                </Button>
+              </Space>
+            ]}
+          >
+            <ProDescriptions column={2}>
+              <ProDescriptions.Item label="安装状态">
+                <Tag color={versionInfo.hasFrps ? 'success' : 'error'}>
+                  {versionInfo.hasFrps ? '已安装' : '未安装'}
+                </Tag>
+              </ProDescriptions.Item>
+              <ProDescriptions.Item label="运行状态">
+                <Tag color={frpsStatus ? 'success' : 'error'}>
+                  {frpsStatus ? '运行中' : '已停止'}
+                </Tag>
+              </ProDescriptions.Item>
+              {/* 配置信息 */}
+              {(() => {
+                try {
+                  const configObj = JSON.parse(frpsConfig);
+                  return (
+                    <>
+                      <ProDescriptions.Item 
+                        label="监听地址" 
+                        tooltip="服务端监听地址"
+                      >
+                        {configObj.bindAddr || '0.0.0.0'}
+                      </ProDescriptions.Item>
+                      <ProDescriptions.Item 
+                        label="监听端口" 
+                        tooltip="服务端监听端口"
+                      >
+                        {configObj.bindPort || 7000}
+                      </ProDescriptions.Item>
+                      <ProDescriptions.Item 
+                        label="认证方式" 
+                        tooltip="服务端认证方式"
+                      >
+                        {configObj.auth?.method || 'token'}
+                      </ProDescriptions.Item>
+                      <ProDescriptions.Item 
+                        label="认证Token" 
+                        tooltip="服务端认证Token"
+                      >
+                        {configObj.auth?.token ? (
+                          <Tag color="blue">{configObj.auth.token}</Tag>
+                        ) : (
+                          <Tag color="red">未设置</Tag>
+                        )}
+                      </ProDescriptions.Item>
+                      {configObj.webServer && (
+                        <>
+                          <ProDescriptions.Item 
+                            label="Web服务地址" 
+                            tooltip="Web管理界面监听地址"
+                          >
+                            {configObj.webServer.addr || '0.0.0.0'}
+                          </ProDescriptions.Item>
+                          <ProDescriptions.Item 
+                            label="Web服务端口" 
+                            tooltip="Web管理界面监听端口"
+                          >
+                            {configObj.webServer.port || 7500}
+                          </ProDescriptions.Item>
+                        </>
                       )}
+                      <ProDescriptions.Item 
+                        label="HTTP代理端口" 
+                        tooltip="HTTP类型代理监听的端口"
+                      >
+                        {configObj.vhostHTTPPort || <Tag color="orange">未设置</Tag>}
+                      </ProDescriptions.Item>
+                      <ProDescriptions.Item 
+                        label="HTTPS代理端口" 
+                        tooltip="HTTPS类型代理监听的端口"
+                      >
+                        {configObj.vhostHTTPSPort || <Tag color="orange">未设置</Tag>}
+                      </ProDescriptions.Item>
+                    </>
+                  );
+                } catch (error) {
+                  return (
+                    <ProDescriptions.Item label="配置信息" span={2}>
+                      <Text type="danger">配置文件格式错误</Text>
                     </ProDescriptions.Item>
-                    {configObj.webServer && (
-                      <>
-                        <ProDescriptions.Item 
-                          label="Web服务地址" 
-                          tooltip="Web管理界面监听地址"
-                        >
-                          {configObj.webServer.addr || '0.0.0.0'}
-                        </ProDescriptions.Item>
-                        <ProDescriptions.Item 
-                          label="Web服务端口" 
-                          tooltip="Web管理界面监听端口"
-                        >
-                          {configObj.webServer.port || 7500}
-                        </ProDescriptions.Item>
-                      </>
-                    )}
-                    <ProDescriptions.Item 
-                      label="HTTP代理端口" 
-                      tooltip="HTTP类型代理监听的端口"
-                    >
-                      {configObj.vhostHTTPPort || <Tag color="orange">未设置</Tag>}
-                    </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="HTTPS代理端口" 
-                      tooltip="HTTPS类型代理监听的端口"
-                    >
-                      {configObj.vhostHTTPSPort || <Tag color="orange">未设置</Tag>}
-                    </ProDescriptions.Item>
-                  </>
-                );
-              } catch (error) {
-                return (
-                  <ProDescriptions.Item label="配置信息" span={2}>
-                    <Text type="danger">配置文件格式错误</Text>
-                  </ProDescriptions.Item>
-                );
-              }
-            })()}
-          </ProDescriptions>
-        </ProCard>
-
-        {/* FRPC状态卡片 */}
-        <ProCard 
-          title="FRPC服务" 
-          headerBordered
-          actions={[
-            <Space key="actions" size="middle" style={{ width: '100%', justifyContent: 'flex-start', marginLeft: '20px' }}>
-              <Button
-                type="primary"
-                onClick={handleStartFrpc}
-                disabled={!versionInfo.hasFrpc || frpcStatus || isLoading}
-              >
-                启动
-              </Button>
-              <Button
-                danger
-                onClick={handleStopFrpc}
-                disabled={!versionInfo.hasFrpc || !frpcStatus || isLoading}
-              >
-                停止
-              </Button>
-              <Button
-                onClick={() => showLogs('frpc')}
-                disabled={!versionInfo.hasFrpc}
-              >
-                查看日志
-              </Button>
-              <Button
-                type="link"
-                icon={<EditOutlined />}
-                onClick={() => goToConfig('frpc')}
-              >
-                编辑配置
-              </Button>
-              <Button
-                type="link"
-                icon={<FileTextOutlined />}
-                onClick={() => showConfig('frpc')}
-              >
-                查看源文件
-              </Button>
-            </Space>
-          ]}
-        >
-          <ProDescriptions column={2}>
-            <ProDescriptions.Item label="安装状态">
-              <Tag color={versionInfo.hasFrpc ? 'success' : 'error'}>
-                {versionInfo.hasFrpc ? '已安装' : '未安装'}
-              </Tag>
-            </ProDescriptions.Item>
-            <ProDescriptions.Item label="运行状态">
-              <Tag color={frpcStatus ? 'success' : 'error'}>
-                {frpcStatus ? '运行中' : '已停止'}
-              </Tag>
-            </ProDescriptions.Item>
-            {/* 配置信息 */}
-            {(() => {
-              try {
-                const configObj = JSON.parse(frpcConfig);
-                return (
-                  <>
-                    <ProDescriptions.Item 
-                      label="服务器地址" 
-                      tooltip="FRP服务器地址"
-                    >
-                      {configObj.serverAddr || <Tag color="red">未设置</Tag>}
-                    </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="服务器端口" 
-                      tooltip="FRP服务器端口"
-                    >
-                      {configObj.serverPort || 7000}
-                    </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="用户名" 
-                      tooltip="用户标识"
-                    >
-                      {configObj.user || <Tag color="orange">未设置</Tag>}
-                    </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="认证方式" 
-                      tooltip="客户端认证方式"
-                    >
-                      {configObj.auth?.method || 'token'}
-                    </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="认证Token" 
-                      tooltip="客户端认证Token"
-                    >
-                      {configObj.auth?.token ? (
-                        <Tag color="blue">{configObj.auth.token}</Tag>
-                      ) : (
-                        <Tag color="red">未设置</Tag>
+                  );
+                }
+              })()}
+            </ProDescriptions>
+          </ProCard>
+        ) : (
+          // FRPC服务卡片
+          <ProCard 
+            title="FRPC服务" 
+            headerBordered
+            actions={[
+              <Space key="actions" size="middle" style={{ width: '100%', justifyContent: 'flex-start', marginLeft: '20px' }}>
+                <Button
+                  type="primary"
+                  onClick={handleStartFrpc}
+                  disabled={!versionInfo.hasFrpc || frpcStatus || isLoading}
+                >
+                  启动
+                </Button>
+                <Button
+                  danger
+                  onClick={handleStopFrpc}
+                  disabled={!versionInfo.hasFrpc || !frpcStatus || isLoading}
+                >
+                  停止
+                </Button>
+                <Button
+                  onClick={() => showLogs('frpc')}
+                  disabled={!versionInfo.hasFrpc}
+                >
+                  查看日志
+                </Button>
+                <Button
+                  type="link"
+                  icon={<EditOutlined />}
+                  onClick={() => goToConfig('frpc')}
+                >
+                  编辑配置
+                </Button>
+                <Button
+                  type="link"
+                  icon={<FileTextOutlined />}
+                  onClick={() => showConfig('frpc')}
+                >
+                  查看源文件
+                </Button>
+              </Space>
+            ]}
+          >
+            <ProDescriptions column={2}>
+              <ProDescriptions.Item label="安装状态">
+                <Tag color={versionInfo.hasFrpc ? 'success' : 'error'}>
+                  {versionInfo.hasFrpc ? '已安装' : '未安装'}
+                </Tag>
+              </ProDescriptions.Item>
+              <ProDescriptions.Item label="运行状态">
+                <Tag color={frpcStatus ? 'success' : 'error'}>
+                  {frpcStatus ? '运行中' : '已停止'}
+                </Tag>
+              </ProDescriptions.Item>
+              {/* 配置信息 */}
+              {(() => {
+                try {
+                  const configObj = JSON.parse(frpcConfig);
+                  return (
+                    <>
+                      <ProDescriptions.Item 
+                        label="服务器地址" 
+                        tooltip="FRP服务器地址"
+                      >
+                        {configObj.serverAddr || <Tag color="red">未设置</Tag>}
+                      </ProDescriptions.Item>
+                      <ProDescriptions.Item 
+                        label="服务器端口" 
+                        tooltip="FRP服务器端口"
+                      >
+                        {configObj.serverPort || 7000}
+                      </ProDescriptions.Item>
+                      <ProDescriptions.Item 
+                        label="用户名" 
+                        tooltip="用户标识"
+                      >
+                        {configObj.user || <Tag color="orange">未设置</Tag>}
+                      </ProDescriptions.Item>
+                      <ProDescriptions.Item 
+                        label="认证方式" 
+                        tooltip="客户端认证方式"
+                      >
+                        {configObj.auth?.method || 'token'}
+                      </ProDescriptions.Item>
+                      <ProDescriptions.Item 
+                        label="认证Token" 
+                        tooltip="客户端认证Token"
+                      >
+                        {configObj.auth?.token ? (
+                          <Tag color="blue">{configObj.auth.token}</Tag>
+                        ) : (
+                          <Tag color="red">未设置</Tag>
+                        )}
+                      </ProDescriptions.Item>
+                      {configObj.transport && (
+                        <>
+                          <ProDescriptions.Item 
+                            label="传输协议" 
+                            tooltip="与服务器之���的通信协议"
+                          >
+                            <Tag color="blue">{configObj.transport.protocol || 'tcp'}</Tag>
+                          </ProDescriptions.Item>
+                          <ProDescriptions.Item 
+                            label="连接池大小" 
+                            tooltip="连接池数量"
+                          >
+                            {configObj.transport.poolCount || 1}
+                          </ProDescriptions.Item>
+                        </>
                       )}
+                      {configObj.log && (
+                        <>
+                          <ProDescriptions.Item 
+                            label="日志级别" 
+                            tooltip="日志记录级别"
+                          >
+                            <Tag color="blue">{configObj.log.level || 'info'}</Tag>
+                          </ProDescriptions.Item>
+                          <ProDescriptions.Item 
+                            label="日志保留天数" 
+                            tooltip="日志文件保留天数"
+                          >
+                            {configObj.log.maxDays || 3}
+                          </ProDescriptions.Item>
+                        </>
+                      )}
+                    </>
+                  );
+                } catch (error) {
+                  return (
+                    <ProDescriptions.Item label="配置信息" span={2}>
+                      <Text type="danger">配置文件格式错误</Text>
                     </ProDescriptions.Item>
-                    {configObj.transport && (
-                      <>
-                        <ProDescriptions.Item 
-                          label="传输协议" 
-                          tooltip="与服务器之间的通信协议"
-                        >
-                          <Tag color="blue">{configObj.transport.protocol || 'tcp'}</Tag>
-                        </ProDescriptions.Item>
-                        <ProDescriptions.Item 
-                          label="连接池大小" 
-                          tooltip="连接池数量"
-                        >
-                          {configObj.transport.poolCount || 1}
-                        </ProDescriptions.Item>
-                      </>
-                    )}
-                    {configObj.log && (
-                      <>
-                        <ProDescriptions.Item 
-                          label="日志级别" 
-                          tooltip="日志记录级别"
-                        >
-                          <Tag color="blue">{configObj.log.level || 'info'}</Tag>
-                        </ProDescriptions.Item>
-                        <ProDescriptions.Item 
-                          label="日志保留天数" 
-                          tooltip="日志文件保留天数"
-                        >
-                          {configObj.log.maxDays || 3}
-                        </ProDescriptions.Item>
-                      </>
-                    )}
-                  </>
-                );
-              } catch (error) {
-                return (
-                  <ProDescriptions.Item label="配置信息" span={2}>
-                    <Text type="danger">配置文件格式错误</Text>
-                  </ProDescriptions.Item>
-                );
-              }
-            })()}
-          </ProDescriptions>
-        </ProCard>
+                  );
+                }
+              })()}
+            </ProDescriptions>
+          </ProCard>
+        )}
       </Space>
 
       {/* 日志查看模态框 */}
