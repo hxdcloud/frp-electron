@@ -1,5 +1,5 @@
 import { request } from '@@/plugin-request';
-import { CheckOutlined, CloudDownloadOutlined, GithubOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloudDownloadOutlined, GithubOutlined, ReloadOutlined } from '@ant-design/icons';
 import { PageContainer, ProList } from '@ant-design/pro-components';
 import {
   Button,
@@ -11,11 +11,14 @@ import {
   message,
   Tooltip,
   Popconfirm,
+  Alert,
+  Spin,
+  Result,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 interface ReleaseInfo {
   tag_name: string;
@@ -39,6 +42,8 @@ const SystemInfoPage: React.FC = () => {
   const [existingVersions, setExistingVersions] = useState<string[]>([]);
   const [releases, setReleases] = useState<ReleaseInfo[]>([]);
   const [downloadingVersion, setDownloadingVersion] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const platform = (window as any).electronAPI.platform;
   const arch = (window as any).electronAPI.arch;
 
@@ -88,18 +93,33 @@ const SystemInfoPage: React.FC = () => {
     return `${size.toFixed(2)} ${units[unitIndex]}`;
   };
 
-  useEffect(() => {
-    const fetchReleaseData = async () => {
-      try {
-        const result = await request<ReleaseInfo[]>(
-          'https://api.github.com/repos/fatedier/frp/releases',
-        );
-        setReleases(result);
-      } catch (err) {
-        message.error('获取版本信息失败');
+  const fetchReleaseData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await request<ReleaseInfo[]>(
+        'https://api.github.com/repos/fatedier/frp/releases',
+        {
+          timeout: 10000, // 10秒超时
+        }
+      );
+      setReleases(result);
+    } catch (err) {
+      const errorMessage = (err as Error).message;
+      if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
+        setError('无法连接到GitHub，请检查您的网络连接');
+      } else if (errorMessage.includes('403')) {
+        setError('GitHub API 访问受限，请稍后再试');
+      } else {
+        setError('获取版本信息失败，请稍后重试');
       }
-    };
+      console.error('获取版本信息失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchReleaseData();
 
     (window as any).electronAPI.onDownloadProgress(
@@ -185,6 +205,168 @@ const SystemInfoPage: React.FC = () => {
     return release.assets.find(asset => asset.name === expectedFileName);
   };
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div style={{ textAlign: 'center', padding: '50px 0' }}>
+          <Spin size="large" />
+          <div style={{ marginTop: 16 }}>正在获取版本信息...</div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <Result
+          status="warning"
+          title="获取版本信息失败"
+          subTitle={error}
+          extra={[
+            <Button
+              key="retry"
+              type="primary"
+              icon={<ReloadOutlined />}
+              onClick={fetchReleaseData}
+            >
+              重试
+            </Button>,
+            <Button
+              key="manual"
+              href="https://github.com/fatedier/frp/releases"
+              target="_blank"
+              icon={<GithubOutlined />}
+            >
+              手动下载
+            </Button>,
+          ]}
+        >
+          <Alert
+            type="info"
+            showIcon
+            message="手动下载说明"
+            description={
+              <div>
+                1. 点击"手动下载"按钮访问 GitHub Releases 页面<br />
+                2. 下载对应系统的压缩包：
+                   {platform === 'win32' ? 'windows' : platform}_{arch === 'x64' ? 'amd64' : arch}<br />
+                3. 解压下载的文件到 {(window as any).electronAPI.showDownloadPath()}<br />
+                4. 重启应用后即可使用新版本
+              </div>
+            }
+          />
+        </Result>
+      );
+    }
+
+    return (
+      <ProList<ReleaseInfo>
+        rowKey="tag_name"
+        dataSource={releases}
+        split={true}
+        pagination={{
+          pageSize: 10,
+        }}
+        cardProps={{
+          bodyStyle: {
+            padding: '16px 24px',
+          },
+        }}
+        style={{
+          background: '#fff',
+          borderRadius: '8px',
+        }}
+        metas={{
+          title: {
+            dataIndex: 'tag_name',
+            render: (_, record) => (
+              <Space size="middle" style={{ padding: '8px 0' }}>
+                <Text strong style={{ fontSize: '16px' }}>{record.tag_name}</Text>
+                {record.tag_name === currentVersion && (
+                  <Tag color="success" icon={<CheckOutlined />}>
+                    当前使用
+                  </Tag>
+                )}
+                {existingVersions.includes(record.tag_name) && 
+                  record.tag_name !== currentVersion && (
+                  <Tag color="blue">已下载</Tag>
+                )}
+              </Space>
+            ),
+          },
+          description: {
+            render: (_, record) => (
+              <Space style={{ padding: '4px 0' }}>
+                <Text type="secondary">
+                  发布时间: {dayjs(record.published_at).format('YYYY-MM-DD HH:mm:ss')}
+                </Text>
+                {getCompatibleAsset(record) && (
+                  <>
+                    <Text type="secondary">
+                      文件大小: {formatFileSize(getCompatibleAsset(record)!.size)}
+                    </Text>
+                    <Text type="secondary">
+                      下载次数: {getCompatibleAsset(record)!.download_count}
+                    </Text>
+                  </>
+                )}
+              </Space>
+            ),
+          },
+          actions: {
+            render: (_, record) => {
+              const isCurrentVersion = record.tag_name === currentVersion;
+              const isDownloaded = existingVersions.includes(record.tag_name);
+              const compatibleAsset = getCompatibleAsset(record);
+
+              return [
+                <Space key="actions" size="middle" style={{ padding: '8px 0' }}>
+                  {compatibleAsset ? (
+                    isDownloaded ? (
+                      <Popconfirm
+                        title="切换版本"
+                        description="确定要切换到这个版本吗？"
+                        onConfirm={() => handleVersionSelect(record.tag_name)}
+                        disabled={isCurrentVersion}
+                      >
+                        <Button 
+                          type={isCurrentVersion ? 'primary' : 'default'}
+                          disabled={isCurrentVersion}
+                        >
+                          {isCurrentVersion ? '使用中' : '切换到此版本'}
+                        </Button>
+                      </Popconfirm>
+                    ) : (
+                      <Button
+                        type="primary"
+                        icon={<CloudDownloadOutlined />}
+                        onClick={() => handleDownload(record.tag_name)}
+                        loading={isDownloading && downloadingVersion === record.tag_name}
+                        disabled={isDownloading}
+                      >
+                        下载
+                      </Button>
+                    )
+                  ) : (
+                    <Tooltip title="当前系统不支持此版本">
+                      <Button disabled>不支持的版本</Button>
+                    </Tooltip>
+                  )}
+                  <Button
+                    icon={<GithubOutlined />}
+                    href={`https://github.com/fatedier/frp/releases/tag/${record.tag_name}`}
+                    target="_blank"
+                  >
+                    查看详情
+                  </Button>
+                </Space>
+              ];
+            },
+          },
+        }}
+      />
+    );
+  };
+
   return (
     <PageContainer>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -198,9 +380,9 @@ const SystemInfoPage: React.FC = () => {
               处理器架构: <Tag color="green">{arch}</Tag>
             </Text>
             <Text strong>
-              当前版本:
+              当前版本:  
               {currentVersion ? (
-                <Tag color="processing" icon={<CheckOutlined />}>
+                <Tag color="processing">
                   {currentVersion}
                 </Tag>
               ) : (
@@ -229,111 +411,7 @@ const SystemInfoPage: React.FC = () => {
           </Card>
         )}
 
-        <ProList<ReleaseInfo>
-          rowKey="tag_name"
-          dataSource={releases}
-          split={true}
-          pagination={{
-            pageSize: 10,
-          }}
-          cardProps={{
-            bodyStyle: {
-              padding: '16px 24px',
-            },
-          }}
-          style={{
-            background: '#fff',
-            borderRadius: '8px',
-          }}
-          metas={{
-            title: {
-              dataIndex: 'tag_name',
-              render: (_, record) => (
-                <Space size="middle" style={{ padding: '8px 0' }}>
-                  <Text strong style={{ fontSize: '16px' }}>{record.tag_name}</Text>
-                  {record.tag_name === currentVersion && (
-                    <Tag color="success" icon={<CheckOutlined />}>
-                      当前使用
-                    </Tag>
-                  )}
-                  {existingVersions.includes(record.tag_name) && 
-                    record.tag_name !== currentVersion && (
-                    <Tag color="blue">已下载</Tag>
-                  )}
-                </Space>
-              ),
-            },
-            description: {
-              render: (_, record) => (
-                <Space style={{ padding: '4px 0' }}>
-                  <Text type="secondary">
-                    发布时间: {dayjs(record.published_at).format('YYYY-MM-DD HH:mm:ss')}
-                  </Text>
-                  {getCompatibleAsset(record) && (
-                    <>
-                      <Text type="secondary">
-                        文件大小: {formatFileSize(getCompatibleAsset(record)!.size)}
-                      </Text>
-                      <Text type="secondary">
-                        下载次数: {getCompatibleAsset(record)!.download_count}
-                      </Text>
-                    </>
-                  )}
-                </Space>
-              ),
-            },
-            actions: {
-              render: (_, record) => {
-                const isCurrentVersion = record.tag_name === currentVersion;
-                const isDownloaded = existingVersions.includes(record.tag_name);
-                const compatibleAsset = getCompatibleAsset(record);
-
-                return [
-                  <Space key="actions" size="middle" style={{ padding: '8px 0' }}>
-                    {compatibleAsset ? (
-                      isDownloaded ? (
-                        <Popconfirm
-                          title="切换版本"
-                          description="确定要切换到这个版本吗？"
-                          onConfirm={() => handleVersionSelect(record.tag_name)}
-                          disabled={isCurrentVersion}
-                        >
-                          <Button 
-                            type={isCurrentVersion ? 'primary' : 'default'}
-                            disabled={isCurrentVersion}
-                          >
-                            {isCurrentVersion ? '使用中' : '切换到此版本'}
-                          </Button>
-                        </Popconfirm>
-                      ) : (
-                        <Button
-                          type="primary"
-                          icon={<CloudDownloadOutlined />}
-                          onClick={() => handleDownload(record.tag_name)}
-                          loading={isDownloading && downloadingVersion === record.tag_name}
-                          disabled={isDownloading}
-                        >
-                          下载
-                        </Button>
-                      )
-                    ) : (
-                      <Tooltip title="当前系统不支持此版本">
-                        <Button disabled>不支持的版本</Button>
-                      </Tooltip>
-                    )}
-                    <Button
-                      icon={<GithubOutlined />}
-                      href={`https://github.com/fatedier/frp/releases/tag/${record.tag_name}`}
-                      target="_blank"
-                    >
-                      查看详情
-                    </Button>
-                  </Space>
-                ];
-              },
-            },
-          }}
-        />
+        {renderContent()}
       </Space>
     </PageContainer>
   );
