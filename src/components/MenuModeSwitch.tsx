@@ -1,6 +1,7 @@
 import { Button } from 'antd';
 import { useState } from 'react';
 import { MenuModeEnum } from '@/constants';
+import { history } from '@umijs/max';
 
 export const MenuModeSwitch = () => {
   const [mode, setMode] = useState(
@@ -11,7 +12,8 @@ export const MenuModeSwitch = () => {
     const newMode = mode === MenuModeEnum.CLIENT ? MenuModeEnum.SERVER : MenuModeEnum.CLIENT;
     localStorage.setItem('menuMode', newMode);
     setMode(newMode);
-    window.location.reload(); // 刷新页面以更新菜单
+    history.push('/home'); // 先跳转到首页
+    window.location.reload(); // 然后刷新页面以更新菜单
   };
 
   return (
