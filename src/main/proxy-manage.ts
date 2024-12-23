@@ -16,6 +16,11 @@ function valueToTomlString(value: any): string {
   }
   if (Array.isArray(value)) {
     if (value.length === 0) return '[]';
+    // 处理字符串数组
+    if (value.every(item => typeof item === 'string')) {
+      return `[${value.map(item => `"${item}"`).join(', ')}]`;
+    }
+    // 处理其他类型的数组
     return `[${value.map(v => valueToTomlString(v)).join(', ')}]`;
   }
   if (typeof value === 'object') {

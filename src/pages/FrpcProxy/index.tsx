@@ -93,7 +93,7 @@ const ProxyListPage: React.FC = () => {
     },
     {
       title: '本地端口',
-      dataIndex: ['backend', 'localPort'],
+      dataIndex: ['localPort'],
       key: 'localPort',
     },
     {

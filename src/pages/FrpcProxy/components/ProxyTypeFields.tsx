@@ -42,6 +42,7 @@ const ProxyTypeFields: React.FC<ProxyTypeFieldsProps> = ({ type }) => {
         tooltip="自定义域名列表，多个域名用逗号分隔"
         width="md"
         rules={[{ required: true, message: '请输入自定义域名' }]}
+        transform={(value: string) => value?.split(',').map((item: string) => item.trim())}
       />
       <ProFormText
         name="subdomain"
@@ -53,6 +54,7 @@ const ProxyTypeFields: React.FC<ProxyTypeFieldsProps> = ({ type }) => {
         label="URL路由"
         tooltip="URL路由配置，多个路由用逗号分隔"
         width="md"
+        transform={(value: string) => value?.split(',').map((item: string) => item.trim())}
       />
       <ProFormText
         name="httpUser"
@@ -83,6 +85,7 @@ const ProxyTypeFields: React.FC<ProxyTypeFieldsProps> = ({ type }) => {
         tooltip="自定义域名列表，多个域名用逗号分隔"
         width="md"
         rules={[{ required: true, message: '请输入自定义域名' }]}
+        transform={(value: string) => value?.split(',').map((item: string) => item.trim())}
       />
       <ProFormText
         name="subdomain"
@@ -100,6 +103,7 @@ const ProxyTypeFields: React.FC<ProxyTypeFieldsProps> = ({ type }) => {
         tooltip="自定义域名列表，多个域名用逗号分隔"
         width="md"
         rules={[{ required: true, message: '请输入自定义域名' }]}
+        transform={(value: string) => value?.split(',').map((item: string) => item.trim())}
       />
       <ProFormText
         name="subdomain"
@@ -141,6 +145,7 @@ const ProxyTypeFields: React.FC<ProxyTypeFieldsProps> = ({ type }) => {
         label="允许访问用户"
         tooltip="允许访问的visitor用户列表，多个用户用逗号分隔，配置为*则允许任何visitor访问"
         width="md"
+        transform={(value: string) => value?.split(',').map((item: string) => item.trim())}
       />
     </ProFormGroup>
   );
@@ -158,6 +163,7 @@ const ProxyTypeFields: React.FC<ProxyTypeFieldsProps> = ({ type }) => {
         label="允许访问用户"
         tooltip="允许访问的visitor用户列表，多个用户用逗号分隔，配置为*则允许任何visitor访问"
         width="md"
+        transform={(value: string) => value?.split(',').map((item: string) => item.trim())}
       />
     </ProFormGroup>
   );
@@ -175,6 +181,7 @@ const ProxyTypeFields: React.FC<ProxyTypeFieldsProps> = ({ type }) => {
         label="允许访问用户"
         tooltip="允许访问的visitor用户列表，多个用户用逗号分隔，配置为*则允许任何visitor访问"
         width="md"
+        transform={(value: string) => value?.split(',').map((item: string) => item.trim())}
       />
     </ProFormGroup>
   );
