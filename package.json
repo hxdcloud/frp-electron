@@ -37,6 +37,7 @@
     "electron-dl": "^4.0.0",
     "extract-zip": "^2.0.1",
     "husky": "^9",
+    "ignore-by-default": "^2.1.0",
     "lint-staged": "^13.2.0",
     "prettier": "^2.8.7",
     "prettier-plugin-organize-imports": "^3.2.2",
