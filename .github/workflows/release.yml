@@ -28,11 +28,11 @@ jobs:
       - name: Build Electron App
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npm run electron:build:win
+            npm run umi build electron --win
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            npm run electron:build:mac
+            npm run umi build  electron --mac
           else
-            npm run electron:build:linux
+            npm run umi build electron --linux
           fi
         shell: bash
 
