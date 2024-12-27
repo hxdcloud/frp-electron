@@ -30,11 +30,11 @@ jobs:
       - name: Build Electron App
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            pnpm umi build electron --win
+            pnpm max build electron --win
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            pnpm umi build  electron --mac
+            pnpm max build electron --mac
           else
-            pnpm umi build electron --linux
+            pnpm max build electron --linux
           fi
         shell: bash
 

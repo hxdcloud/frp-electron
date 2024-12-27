@@ -46,7 +46,7 @@
     "typescript": "^5.0.3"
   },
   "build": {
-    "appId": "com.your-name.frp-electron",
+    "appId": "com.hxdcloud.frp-electron",
     "productName": "FRP Electron",
     "directories": {
       "output": "dist_electron"
