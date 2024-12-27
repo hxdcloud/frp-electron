@@ -23,16 +23,18 @@ jobs:
           node-version: 22
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install pnpm
+          pnpm install
         
       - name: Build Electron App
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npm run umi build electron --win
+            pnpm umi build electron --win
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            npm run umi build  electron --mac
+            pnpm umi build  electron --mac
           else
-            npm run umi build electron --linux
+            pnpm umi build electron --linux
           fi
         shell: bash
 
