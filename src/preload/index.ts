@@ -15,6 +15,14 @@ interface FrpStatus {
   exitCode: number | null;
 }
 
+interface ProxyConfig {
+  name: string;
+  type: string;
+  localPort: number;
+  remotePort?: number;
+  // 可以根据需要添加其他字段
+}
+
 // 定义统一的 electronAPI 接口
 const electronAPI = {
   // 版本相关
@@ -46,39 +54,45 @@ const electronAPI = {
   
   // Frps 配置和控制
   readFrpsConfig: () => ipcRenderer.invoke('read-frps-config'),
+  readFrpsConfigFile: () => ipcRenderer.invoke('read-frps-config-file'),
   saveFrpsConfig: (config: any) => ipcRenderer.invoke('save-frps-config', config),
-  startFrps: (configPath: string) => ipcRenderer.invoke('start-frps', configPath),
+  startFrps: () => ipcRenderer.invoke('start-frps'),
   stopFrps: () => ipcRenderer.invoke('stop-frps'),
-  getFrpsStatus: () => ipcRenderer.invoke('get-frps-status'),
+  getFrpsStatus: () => ipcRenderer.invoke('get-frps-status') as Promise<boolean>,
   onFrpsLog: (callback: (log: FrpLog) => void) => {
-    ipcRenderer.on('frps-log', (_event, log) => callback(log));
+    const listener = (_event: IpcRendererEvent, log: FrpLog) => callback(log);
+    ipcRenderer.on('frps-log', listener);
     return () => {
-      ipcRenderer.removeListener('frps-log', callback);
+      ipcRenderer.removeListener('frps-log', listener);
     };
   },
   onFrpsStatus: (callback: (status: FrpStatus) => void) => {
-    ipcRenderer.on('frps-status', (_event, status) => callback(status));
+    const listener = (_event: IpcRendererEvent, status: FrpStatus) => callback(status);
+    ipcRenderer.on('frps-status', listener);
     return () => {
-      ipcRenderer.removeListener('frps-status', callback);
+      ipcRenderer.removeListener('frps-status', listener);
     };
   },
   
   // Frpc 配置和控制
   readFrpcConfig: () => ipcRenderer.invoke('read-frpc-config'),
+  readFrpcConfigFile: () => ipcRenderer.invoke('read-frpc-config-file'),
   saveFrpcConfig: (config: any) => ipcRenderer.invoke('save-frpc-config', config),
-  startFrpc: (configPath: string) => ipcRenderer.invoke('start-frpc', configPath),
+  startFrpc: () => ipcRenderer.invoke('start-frpc'),
   stopFrpc: () => ipcRenderer.invoke('stop-frpc'),
-  getFrpcStatus: () => ipcRenderer.invoke('get-frpc-status'),
+  getFrpcStatus: () => ipcRenderer.invoke('get-frpc-status') as Promise<boolean>,
   onFrpcLog: (callback: (log: FrpLog) => void) => {
-    ipcRenderer.on('frpc-log', (_event, log) => callback(log));
+    const listener = (_event: IpcRendererEvent, log: FrpLog) => callback(log);
+    ipcRenderer.on('frpc-log', listener);
     return () => {
-      ipcRenderer.removeListener('frpc-log', callback);
+      ipcRenderer.removeListener('frpc-log', listener);
     };
   },
   onFrpcStatus: (callback: (status: FrpStatus) => void) => {
-    ipcRenderer.on('frpc-status', (_event, status) => callback(status));
+    const listener = (_event: IpcRendererEvent, status: FrpStatus) => callback(status);
+    ipcRenderer.on('frpc-status', listener);
     return () => {
-      ipcRenderer.removeListener('frpc-status', callback);
+      ipcRenderer.removeListener('frpc-status', listener);
     };
   },
   
@@ -86,7 +100,7 @@ const electronAPI = {
   checkFrpVersion: () => ipcRenderer.invoke('check-frp-version'),
   
   // 代理管理相关
-  getProxyList: () => ipcRenderer.invoke('get-proxy-list'),
+  getProxyList: () => ipcRenderer.invoke('get-proxy-list') as Promise<ProxyConfig[]>,
   getProxyConfig: (name: string) => ipcRenderer.invoke('get-proxy-config', name),
   addProxy: (config: any) => ipcRenderer.invoke('add-proxy', config),
   updateProxy: (name: string, config: any) => ipcRenderer.invoke('update-proxy', name, config),

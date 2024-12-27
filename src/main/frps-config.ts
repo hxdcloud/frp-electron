@@ -150,12 +150,33 @@ export const getFrpsConfigPath = () => {
 
 // 初始化默认配置
 const defaultConfig: FrpsConfig = {
-    bindAddr: '0.0.0.0',
+    bindAddr: "0.0.0.0",
     bindPort: 7000,
     auth: {
-        method: 'token',
-        token: '',
+        method: "token",
+        token: "",
     },
+    transport: {
+        tcpMuxKeepaliveInterval: 60,
+        tcpKeepalive: 7200,
+        maxPoolCount: 5,
+        heartbeatTimeout: 90,
+    },
+    webServer: {
+        addr: "0.0.0.0",
+        port: 7500,
+        user: "admin",
+        password: "admin",
+    },
+    log: {
+        level: "info",
+        maxDays: 3,
+    },
+};
+
+// 获取默认配置的 TOML 格式字符串
+const getDefaultConfigToml = (): string => {
+    return objectToToml(defaultConfig).join('\n');
 };
 
 // 确保配置目录存在
@@ -168,8 +189,7 @@ export const ensureConfigDir = () => {
         }
 
         if (!fs.existsSync(configPath)) {
-            const defaultToml = objectToToml(defaultConfig).join('\n');
-            fs.writeFileSync(configPath, defaultToml, 'utf-8');
+            fs.writeFileSync(configPath, getDefaultConfigToml(), 'utf-8');
             console.log('创建默认配置文件:', configPath);
         }
     } catch (error) {
@@ -182,16 +202,58 @@ export const ensureConfigDir = () => {
 export const readFrpsConfig = (): FrpsConfig => {
     const { configPath } = getFrpsConfigPath();
     try {
-        const content = fs.readFileSync(configPath, 'utf-8');
-        if (!content.trim()) {
-            console.log('配置文件为空，使用默认配置');
+        if (!fs.existsSync(configPath)) {
+            console.log('配置文件不存在，创建默认配置');
+            fs.writeFileSync(configPath, getDefaultConfigToml(), 'utf-8');
             return defaultConfig;
         }
+
+        const content = fs.readFileSync(configPath, 'utf-8');
+        if (!content.trim()) {
+            console.log('配置文件为空，写入默认配置');
+            fs.writeFileSync(configPath, getDefaultConfigToml(), 'utf-8');
+            return defaultConfig;
+        }
+
         const config = toml.parse(content);
         return config || defaultConfig;
     } catch (error) {
         console.error('读取配置文件失败:', error);
+        // 如果解析失败，写入默认配置
+        try {
+            fs.writeFileSync(configPath, getDefaultConfigToml(), 'utf-8');
+        } catch (writeError) {
+            console.error('写入默认配置失败:', writeError);
+        }
         return defaultConfig;
+    }
+};
+
+// 读取原始配置文件内容
+export const readFrpsConfigFile = (): string => {
+    const { configPath } = getFrpsConfigPath();
+    try {
+        if (!fs.existsSync(configPath)) {
+            console.log('配置文件不存在，创建默认配置');
+            const defaultToml = getDefaultConfigToml();
+            fs.writeFileSync(configPath, defaultToml, 'utf-8');
+            return defaultToml;
+        }
+
+        const content = fs.readFileSync(configPath, 'utf-8');
+        if (!content.trim()) {
+            console.log('配置文件为空，写入默认配置');
+            const defaultToml = getDefaultConfigToml();
+            fs.writeFileSync(configPath, defaultToml, 'utf-8');
+            return defaultToml;
+        }
+
+        return content;
+    } catch (error) {
+        console.error('读取配置文件失败:', error);
+        const defaultToml = getDefaultConfigToml();
+        fs.writeFileSync(configPath, defaultToml, 'utf-8');
+        return defaultToml;
     }
 };
 
@@ -220,6 +282,11 @@ export const setupFrpsConfigHandlers = () => {
     // 读取配置
     ipcMain.handle('read-frps-config', async () => {
         return readFrpsConfig();
+    });
+
+    // 读取配置文件原始内容
+    ipcMain.handle('read-frps-config-file', async () => {
+        return readFrpsConfigFile();
     });
 
     // 保存配置

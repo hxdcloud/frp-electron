@@ -8,6 +8,9 @@ import { Button, Modal, Space, Tag, Typography, message } from 'antd';
 import { ReloadOutlined, WarningOutlined, EditOutlined, FileTextOutlined } from '@ant-design/icons';
 import { history } from '@umijs/max';
 import { MenuModeEnum } from '@/constants';
+import { Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { RightOutlined } from '@ant-design/icons';
 
 const { Text, Link } = Typography;
 
@@ -27,6 +30,14 @@ interface FrpVersionInfo {
   version: string | null;
   hasFrps: boolean;
   hasFrpc: boolean;
+}
+
+interface ProxyConfig {
+  name: string;
+  type: string;
+  localPort: number;
+  remotePort?: number;
+  // 可以根据需要添加其他字段
 }
 
 const Home: React.FC = () => {
@@ -61,7 +72,11 @@ const Home: React.FC = () => {
     localStorage.getItem('menuMode') || MenuModeEnum.SERVER
   );
 
-  // 添加日志自动滚动到底部的效果
+  // 添加代理列表状态
+  const [proxyList, setProxyList] = useState<ProxyConfig[]>([]);
+  const [proxyLoading, setProxyLoading] = useState(false);
+
+  // 添加日志自动滚动到底部���果
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
@@ -317,29 +332,29 @@ const Home: React.FC = () => {
             {type === 'frps' ? (
               <>
                 {/* FRPS 基础配置 */}
-                <ProDescriptions.Item 
-                  label="监听地址" 
+                <ProDescriptions.Item
+                  label="监听地址"
                   tooltip="服务端监听地址"
                 >
                   {configObj.bindAddr || '0.0.0.0'}
                 </ProDescriptions.Item>
-                <ProDescriptions.Item 
-                  label="监听端口" 
+                <ProDescriptions.Item
+                  label="监听端口"
                   tooltip="服务端监听端口"
                 >
                   {configObj.bindPort || 7000}
                 </ProDescriptions.Item>
-                
+
                 {/* FRPS 认证配置 */}
-                <ProDescriptions.Item 
-                  label="认证方式" 
+                <ProDescriptions.Item
+                  label="认证方式"
                   tooltip="服务端认证方式"
                 >
                   {configObj.auth?.method || 'token'}
                 </ProDescriptions.Item>
                 {configObj.auth?.method === 'token' && (
-                  <ProDescriptions.Item 
-                    label="认证Token" 
+                  <ProDescriptions.Item
+                    label="认证Token"
                     tooltip="服务端认证Token"
                   >
                     {configObj.auth?.token ? (
@@ -353,14 +368,14 @@ const Home: React.FC = () => {
                 {/* FRPS Web服务配置 */}
                 {configObj.webServer && (
                   <>
-                    <ProDescriptions.Item 
-                      label="Web服务地址" 
+                    <ProDescriptions.Item
+                      label="Web服务地址"
                       tooltip="Web管理界面监听地址"
                     >
                       {configObj.webServer.addr || '0.0.0.0'}
                     </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="Web服务端口" 
+                    <ProDescriptions.Item
+                      label="Web服务端口"
                       tooltip="Web管理界面监听端口"
                     >
                       {configObj.webServer.port || 7500}
@@ -368,15 +383,15 @@ const Home: React.FC = () => {
                   </>
                 )}
 
-                {/* FRPS ��理配置 */}
-                <ProDescriptions.Item 
-                  label="HTTP代理端口" 
+                {/* FRPS 理配置 */}
+                <ProDescriptions.Item
+                  label="HTTP代理端口"
                   tooltip="HTTP类型代理监听的端口"
                 >
                   {configObj.vhostHTTPPort || <Tag color="orange">未设置</Tag>}
                 </ProDescriptions.Item>
-                <ProDescriptions.Item 
-                  label="HTTPS代理端口" 
+                <ProDescriptions.Item
+                  label="HTTPS代理端口"
                   tooltip="HTTPS类型代理监听的端口"
                 >
                   {configObj.vhostHTTPSPort || <Tag color="orange">未设置</Tag>}
@@ -385,35 +400,35 @@ const Home: React.FC = () => {
             ) : (
               <>
                 {/* FRPC 基础配置 */}
-                <ProDescriptions.Item 
-                  label="服务器地址" 
+                <ProDescriptions.Item
+                  label="服务器地址"
                   tooltip="FRP服务器地址"
                 >
                   {configObj.serverAddr || <Tag color="red">未设置</Tag>}
                 </ProDescriptions.Item>
-                <ProDescriptions.Item 
-                  label="服务器端口" 
+                <ProDescriptions.Item
+                  label="服务器端口"
                   tooltip="FRP服务器端口"
                 >
                   {configObj.serverPort || 7000}
                 </ProDescriptions.Item>
-                <ProDescriptions.Item 
-                  label="用户名" 
+                <ProDescriptions.Item
+                  label="用户名"
                   tooltip="用户标识"
                 >
                   {configObj.user || <Tag color="orange">未设置</Tag>}
                 </ProDescriptions.Item>
 
                 {/* FRPC 认证配置 */}
-                <ProDescriptions.Item 
-                  label="认证方式" 
+                <ProDescriptions.Item
+                  label="认证方式"
                   tooltip="客户端认证方式"
                 >
                   {configObj.auth?.method || 'token'}
                 </ProDescriptions.Item>
                 {configObj.auth?.method === 'token' && (
-                  <ProDescriptions.Item 
-                    label="认证Token" 
+                  <ProDescriptions.Item
+                    label="认证Token"
                     tooltip="客户端认证Token"
                   >
                     {configObj.auth?.token ? (
@@ -427,14 +442,14 @@ const Home: React.FC = () => {
                 {/* FRPC 传输配置 */}
                 {configObj.transport && (
                   <>
-                    <ProDescriptions.Item 
-                      label="传输协议" 
+                    <ProDescriptions.Item
+                      label="传输协议"
                       tooltip="与服务器之间的通信协议"
                     >
                       <Tag color="blue">{configObj.transport.protocol || 'tcp'}</Tag>
                     </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="连接池大小" 
+                    <ProDescriptions.Item
+                      label="连接池大小"
                       tooltip="连接池数量"
                     >
                       {configObj.transport.poolCount || 1}
@@ -445,14 +460,14 @@ const Home: React.FC = () => {
                 {/* FRPC 日志配置 */}
                 {configObj.log && (
                   <>
-                    <ProDescriptions.Item 
-                      label="日志级别" 
+                    <ProDescriptions.Item
+                      label="日志级别"
                       tooltip="日志记录级别"
                     >
                       <Tag color="blue">{configObj.log.level || 'info'}</Tag>
                     </ProDescriptions.Item>
-                    <ProDescriptions.Item 
-                      label="日志保留天数" 
+                    <ProDescriptions.Item
+                      label="日志保留天数"
                       tooltip="日志文件保留天数"
                     >
                       {configObj.log.maxDays || 3}
@@ -472,27 +487,25 @@ const Home: React.FC = () => {
   // 显示配置文件
   const showConfig = async (type: 'frps' | 'frpc') => {
     try {
-      const content = type === 'frps' ? frpsConfig : frpcConfig;
-      // 将JSON格式的配置转换为TOML格式显示
-      const configObj = JSON.parse(content);
-      // 简单的格式化显示，实际项目中可以使用专门的JSON to TOML转换库
-      const formattedContent = Object.entries(configObj)
-        .map(([key, value]) => {
-          if (typeof value === 'object' && value !== null) {
-            const sectionContent = Object.entries(value as object)
-              .map(([k, v]) => `${k} = ${JSON.stringify(v)}`)
-              .join('\n');
-            return `[${key}]\n${sectionContent}`;
-          }
-          return `${key} = ${JSON.stringify(value)}`;
-        })
-        .join('\n\n');
+      console.log(`正在读取 ${type} 配置文件...`);
       
-      setConfigContent(formattedContent);
+      // 根据类型读取对应的配置
+      const content = type === 'frps' 
+        ? await window.electronAPI.readFrpsConfigFile()
+        : await window.electronAPI.readFrpcConfigFile();
+      
+      console.log(`${type} 配置内容:`, content);
+      
+      if (!content) {
+        throw new Error(`${type} 配置内容为空`);
+      }
+      
+      setConfigContent(content);
       setCurrentConfigType(type);
       setConfigModalVisible(true);
     } catch (error) {
-      message.error('读取配置文件失败');
+      console.error(`读取 ${type} 配置文件失败:`, error);
+      message.error(`读取 ${type} 配置文件失败: ${(error as Error).message}`);
     }
   };
 
@@ -506,6 +519,57 @@ const Home: React.FC = () => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
+  }, []);
+
+  // 添加代理列表的列定义
+  const proxyColumns: ColumnsType<ProxyConfig> = [
+    {
+      title: '代理名称',
+      dataIndex: 'name',
+      key: 'name',
+      width: 200,
+    },
+    {
+      title: '类型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 100,
+    },
+    {
+      title: '本地端口',
+      dataIndex: 'localPort',
+      key: 'localPort',
+      width: 100,
+    },
+    {
+      title: '远程端口',
+      dataIndex: 'remotePort',
+      key: 'remotePort',
+      width: 100,
+      render: (text: string, record: ProxyConfig) => {
+        if (['tcp', 'udp'].includes(record.type)) {
+          return text;
+        }
+        return '-';
+      },
+    },
+  ];
+
+  // 在useEffect中添加加载代理列表的逻辑
+  useEffect(() => {
+    const loadProxyList = async () => {
+      try {
+        setProxyLoading(true);
+        const list = await window.electronAPI.getProxyList();
+        setProxyList(list);
+      } catch (error) {
+        console.error('加载代理列表失败:', error);
+      } finally {
+        setProxyLoading(false);
+      }
+    };
+
+    loadProxyList();
   }, []);
 
   return (
@@ -549,8 +613,8 @@ const Home: React.FC = () => {
         {/* 根据当前模式显示对应的服务卡片 */}
         {menuMode === MenuModeEnum.SERVER ? (
           // FRPS服务卡片
-          <ProCard 
-            title="FRPS服务" 
+          <ProCard
+            title="FRPS服务"
             headerBordered
             actions={[
               <Space key="actions" size="middle" style={{ width: '100%', justifyContent: 'flex-start', marginLeft: '20px' }}>
@@ -608,26 +672,26 @@ const Home: React.FC = () => {
                   const configObj = JSON.parse(frpsConfig);
                   return (
                     <>
-                      <ProDescriptions.Item 
-                        label="监听地址" 
+                      <ProDescriptions.Item
+                        label="监听地址"
                         tooltip="服务端监听地址"
                       >
                         {configObj.bindAddr || '0.0.0.0'}
                       </ProDescriptions.Item>
-                      <ProDescriptions.Item 
-                        label="监听端口" 
+                      <ProDescriptions.Item
+                        label="监听端口"
                         tooltip="服务端监听端口"
                       >
                         {configObj.bindPort || 7000}
                       </ProDescriptions.Item>
-                      <ProDescriptions.Item 
-                        label="认证方式" 
+                      <ProDescriptions.Item
+                        label="认证方式"
                         tooltip="服务端认证方式"
                       >
                         {configObj.auth?.method || 'token'}
                       </ProDescriptions.Item>
-                      <ProDescriptions.Item 
-                        label="认证Token" 
+                      <ProDescriptions.Item
+                        label="认证Token"
                         tooltip="服务端认证Token"
                       >
                         {configObj.auth?.token ? (
@@ -638,28 +702,28 @@ const Home: React.FC = () => {
                       </ProDescriptions.Item>
                       {configObj.webServer && (
                         <>
-                          <ProDescriptions.Item 
-                            label="Web服务地址" 
+                          <ProDescriptions.Item
+                            label="Web服务地址"
                             tooltip="Web管理界面监听地址"
                           >
                             {configObj.webServer.addr || '0.0.0.0'}
                           </ProDescriptions.Item>
-                          <ProDescriptions.Item 
-                            label="Web服务端口" 
+                          <ProDescriptions.Item
+                            label="Web服务端口"
                             tooltip="Web管理界面监听端口"
                           >
                             {configObj.webServer.port || 7500}
                           </ProDescriptions.Item>
                         </>
                       )}
-                      <ProDescriptions.Item 
-                        label="HTTP代理端口" 
+                      <ProDescriptions.Item
+                        label="HTTP代理端口"
                         tooltip="HTTP类型代理监听的端口"
                       >
                         {configObj.vhostHTTPPort || <Tag color="orange">未设置</Tag>}
                       </ProDescriptions.Item>
-                      <ProDescriptions.Item 
-                        label="HTTPS代理端口" 
+                      <ProDescriptions.Item
+                        label="HTTPS代理端口"
                         tooltip="HTTPS类型代理监听的端口"
                       >
                         {configObj.vhostHTTPSPort || <Tag color="orange">未设置</Tag>}
@@ -678,8 +742,8 @@ const Home: React.FC = () => {
           </ProCard>
         ) : (
           // FRPC服务卡片
-          <ProCard 
-            title="FRPC服务" 
+          <ProCard
+            title="FRPC服务"
             headerBordered
             actions={[
               <Space key="actions" size="middle" style={{ width: '100%', justifyContent: 'flex-start', marginLeft: '20px' }}>
@@ -737,32 +801,32 @@ const Home: React.FC = () => {
                   const configObj = JSON.parse(frpcConfig);
                   return (
                     <>
-                      <ProDescriptions.Item 
-                        label="服务器地址" 
+                      <ProDescriptions.Item
+                        label="服务器地址"
                         tooltip="FRP服务器地址"
                       >
                         {configObj.serverAddr || <Tag color="red">未设置</Tag>}
                       </ProDescriptions.Item>
-                      <ProDescriptions.Item 
-                        label="服务器端口" 
+                      <ProDescriptions.Item
+                        label="服务器端口"
                         tooltip="FRP服务器端口"
                       >
                         {configObj.serverPort || 7000}
                       </ProDescriptions.Item>
-                      <ProDescriptions.Item 
-                        label="用户名" 
+                      <ProDescriptions.Item
+                        label="用户名"
                         tooltip="用户标识"
                       >
                         {configObj.user || <Tag color="orange">未设置</Tag>}
                       </ProDescriptions.Item>
-                      <ProDescriptions.Item 
-                        label="认证方式" 
+                      <ProDescriptions.Item
+                        label="认证方式"
                         tooltip="客户端认证方式"
                       >
                         {configObj.auth?.method || 'token'}
                       </ProDescriptions.Item>
-                      <ProDescriptions.Item 
-                        label="认证Token" 
+                      <ProDescriptions.Item
+                        label="认证Token"
                         tooltip="客户端认证Token"
                       >
                         {configObj.auth?.token ? (
@@ -773,14 +837,14 @@ const Home: React.FC = () => {
                       </ProDescriptions.Item>
                       {configObj.transport && (
                         <>
-                          <ProDescriptions.Item 
-                            label="传输协议" 
-                            tooltip="与服务器之���的通信协议"
+                          <ProDescriptions.Item
+                            label="传输协议"
+                            tooltip="与服务器之间的通信协议"
                           >
                             <Tag color="blue">{configObj.transport.protocol || 'tcp'}</Tag>
                           </ProDescriptions.Item>
-                          <ProDescriptions.Item 
-                            label="连接池大小" 
+                          <ProDescriptions.Item
+                            label="连接池大小"
                             tooltip="连接池数量"
                           >
                             {configObj.transport.poolCount || 1}
@@ -789,14 +853,14 @@ const Home: React.FC = () => {
                       )}
                       {configObj.log && (
                         <>
-                          <ProDescriptions.Item 
-                            label="日志级别" 
+                          <ProDescriptions.Item
+                            label="日志级别"
                             tooltip="日志记录级别"
                           >
                             <Tag color="blue">{configObj.log.level || 'info'}</Tag>
                           </ProDescriptions.Item>
-                          <ProDescriptions.Item 
-                            label="日志保留天数" 
+                          <ProDescriptions.Item
+                            label="日志保留天数"
                             tooltip="日志文件保留天数"
                           >
                             {configObj.log.maxDays || 3}
@@ -816,6 +880,33 @@ const Home: React.FC = () => {
             </ProDescriptions>
           </ProCard>
         )}
+
+        {/* 在Space组件内，根据menuMode条件渲染代理列表卡片 */}
+        {/* {menuMode === MenuModeEnum.CLIENT && (
+          <ProCard
+            title="代理列表"
+            headerBordered
+            extra={
+              <Button
+                type="link"
+                onClick={() => history.push('/frpc-proxy')}
+                icon={<RightOutlined />}
+              >
+                查看详情
+              </Button>
+            }
+          >
+            <Table<ProxyConfig>
+              columns={proxyColumns}
+              dataSource={proxyList}
+              loading={proxyLoading}
+              rowKey="name"
+              size="small"
+              pagination={false}
+              scroll={{ y: 200 }}
+            />
+          </ProCard>
+        )} */}
       </Space>
 
       {/* 日志查看模态框 */}
@@ -876,7 +967,7 @@ const Home: React.FC = () => {
           </Button>,
         ]}
       >
-        <div
+        <pre
           style={{
             maxHeight: '500px',
             overflow: 'auto',
@@ -889,7 +980,7 @@ const Home: React.FC = () => {
           }}
         >
           {configContent}
-        </div>
+        </pre>
       </Modal>
     </PageContainer>
   );
