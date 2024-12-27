@@ -44,5 +44,39 @@
     "prettier-plugin-packagejson": "^2.4.3",
     "toml": "^3.0.0",
     "typescript": "^5.0.3"
+  },
+  "build": {
+    "appId": "com.your-name.frp-electron",
+    "productName": "FRP Electron",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "dist/**/*",
+      "!node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "hxdcloud",
+      "repo": "frp-electron"
+    }
   }
 }
