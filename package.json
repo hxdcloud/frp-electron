@@ -1,6 +1,6 @@
 {
   "name": "frp-electron",
-  "version": "0.0.1",
+  "version": "0.0.7",
   "private": true,
   "author": "wangxingrui1997@gmail.com <wangxingrui1997@gmail.com>",
   "scripts": {
