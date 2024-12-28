@@ -37,7 +37,8 @@ jobs:
             pnpm max build electron --linux
           fi
         shell: bash
-
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
