@@ -41,7 +41,6 @@ jobs:
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
             pnpm max build electron --mac
           else
-            sudo chown -R root:root .
             pnpm max build electron --linux
           fi
         shell: bash
