@@ -23,6 +23,12 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install Linux Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools rpm
+
       - name: Install Dependencies
         run: |
           npm install -g pnpm
@@ -35,11 +41,14 @@ jobs:
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
             pnpm max build electron --mac
           else
+            sudo chown -R root:root .
             pnpm max build electron --linux
           fi
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USE_SYSTEM_7ZA: "true"
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: "true"
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
